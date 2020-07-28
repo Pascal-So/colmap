@@ -63,8 +63,12 @@ BOOST_AUTO_TEST_CASE(TestDefault) {
   BOOST_CHECK(IsNaN(image.TvecPrior(0)));
   BOOST_CHECK(IsNaN(image.TvecPrior(1)));
   BOOST_CHECK(IsNaN(image.TvecPrior(2)));
+  BOOST_CHECK(IsNaN(image.GravityPrior(0)));
+  BOOST_CHECK(IsNaN(image.GravityPrior(1)));
+  BOOST_CHECK(IsNaN(image.GravityPrior(2)));
   BOOST_CHECK_EQUAL(image.HasQvecPrior(), false);
   BOOST_CHECK_EQUAL(image.HasTvecPrior(), false);
+  BOOST_CHECK_EQUAL(image.HasGravityPrior(), false);
   BOOST_CHECK_EQUAL(image.Points2D().size(), 0);
 }
 
@@ -277,6 +281,27 @@ BOOST_AUTO_TEST_CASE(TestTvecPrior) {
   BOOST_CHECK_EQUAL(image.TvecPrior(0), 3.0);
   image.TvecPrior() = Eigen::Vector3d(4.0, 0.0, 0.0);
   BOOST_CHECK_EQUAL(image.TvecPrior(0), 4.0);
+}
+
+BOOST_AUTO_TEST_CASE(TestGravityPrior) {
+  Image image;
+  BOOST_CHECK(IsNaN(image.GravityPrior(0)));
+  BOOST_CHECK(IsNaN(image.GravityPrior(1)));
+  BOOST_CHECK(IsNaN(image.GravityPrior(2)));
+  BOOST_CHECK_EQUAL(image.HasGravityPrior(), false);
+  image.GravityPrior(0) = 2.0;
+  BOOST_CHECK_EQUAL(image.HasGravityPrior(), false);
+  image.GravityPrior(1) = 2.0;
+  BOOST_CHECK_EQUAL(image.HasGravityPrior(), false);
+  image.GravityPrior(2) = 2.0;
+  BOOST_CHECK_EQUAL(image.HasGravityPrior(), true);
+  BOOST_CHECK_EQUAL(image.GravityPrior(0), 2.0);
+  BOOST_CHECK_EQUAL(image.GravityPrior(1), 2.0);
+  BOOST_CHECK_EQUAL(image.GravityPrior(2), 2.0);
+  image.SetGravityPrior(Eigen::Vector3d(3.0, 0.0, 0.0));
+  BOOST_CHECK_EQUAL(image.GravityPrior(0), 3.0);
+  image.GravityPrior() = Eigen::Vector3d(4.0, 0.0, 0.0);
+  BOOST_CHECK_EQUAL(image.GravityPrior(0), 4.0);
 }
 
 BOOST_AUTO_TEST_CASE(TestPoints2D) {

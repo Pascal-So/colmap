@@ -235,6 +235,12 @@ Image ReadImageRow(sqlite3_stmt* sql_stmt) {
     }
   }
 
+  for (size_t i = 0; i < 3; ++i) {
+    if (sqlite3_column_type(sql_stmt, i + 10) != SQLITE_NULL) {
+      image.GravityPrior(i) = sqlite3_column_double(sql_stmt, i + 10);
+    }
+  }
+
   return image;
 }
 
@@ -644,6 +650,13 @@ image_t Database::WriteImage(const Image& image,
   SQLITE3_CALL(
       sqlite3_bind_double(sql_stmt_add_image_, 10, image.TvecPrior(2)));
 
+  SQLITE3_CALL(
+      sqlite3_bind_double(sql_stmt_add_image_, 11, image.GravityPrior(0)));
+  SQLITE3_CALL(
+      sqlite3_bind_double(sql_stmt_add_image_, 12, image.GravityPrior(1)));
+  SQLITE3_CALL(
+      sqlite3_bind_double(sql_stmt_add_image_, 13, image.GravityPrior(2)));
+
   SQLITE3_CALL(sqlite3_step(sql_stmt_add_image_));
   SQLITE3_CALL(sqlite3_reset(sql_stmt_add_image_));
 
@@ -779,8 +792,14 @@ void Database::UpdateImage(const Image& image) const {
       sqlite3_bind_double(sql_stmt_update_image_, 8, image.TvecPrior(1)));
   SQLITE3_CALL(
       sqlite3_bind_double(sql_stmt_update_image_, 9, image.TvecPrior(2)));
+  SQLITE3_CALL(
+      sqlite3_bind_double(sql_stmt_update_image_, 10, image.GravityPrior(0)));
+  SQLITE3_CALL(
+      sqlite3_bind_double(sql_stmt_update_image_, 11, image.GravityPrior(1)));
+  SQLITE3_CALL(
+      sqlite3_bind_double(sql_stmt_update_image_, 12, image.GravityPrior(2)));
 
-  SQLITE3_CALL(sqlite3_bind_int64(sql_stmt_update_image_, 10, image.ImageId()));
+  SQLITE3_CALL(sqlite3_bind_int64(sql_stmt_update_image_, 13, image.ImageId()));
 
   SQLITE3_CALL(sqlite3_step(sql_stmt_update_image_));
   SQLITE3_CALL(sqlite3_reset(sql_stmt_update_image_));
@@ -997,8 +1016,9 @@ void Database::PrepareSQLStatements() {
 
   sql =
       "INSERT INTO images(image_id, name, camera_id, prior_qw, prior_qx, "
-      "prior_qy, prior_qz, prior_tx, prior_ty, prior_tz) VALUES(?, ?, ?, ?, ?, "
-      "?, ?, ?, ?, ?);";
+      "prior_qy, prior_qz, prior_tx, prior_ty, prior_tz, prior_gravity_x, "
+      "prior_gravity_y, prior_gravity_z) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, "
+      "?, ?, ?, ?);";
   SQLITE3_CALL(
       sqlite3_prepare_v2(database_, sql.c_str(), -1, &sql_stmt_add_image_, 0));
   sql_stmts_.push_back(sql_stmt_add_image_);
@@ -1015,7 +1035,8 @@ void Database::PrepareSQLStatements() {
 
   sql =
       "UPDATE images SET name=?, camera_id=?, prior_qw=?, prior_qx=?, "
-      "prior_qy=?, prior_qz=?, prior_tx=?, prior_ty=?, prior_tz=? WHERE "
+      "prior_qy=?, prior_qz=?, prior_tx=?, prior_ty=?, prior_tz=?, "
+      "prior_gravity_x=?, prior_gravity_y=?, prior_gravity_z=? WHERE "
       "image_id=?;";
   SQLITE3_CALL(sqlite3_prepare_v2(database_, sql.c_str(), -1,
                                   &sql_stmt_update_image_, 0));
@@ -1171,16 +1192,19 @@ void Database::CreateCameraTable() const {
 void Database::CreateImageTable() const {
   const std::string sql = StringPrintf(
       "CREATE TABLE IF NOT EXISTS images"
-      "   (image_id   INTEGER  PRIMARY KEY AUTOINCREMENT  NOT NULL,"
-      "    name       TEXT                                NOT NULL UNIQUE,"
-      "    camera_id  INTEGER                             NOT NULL,"
-      "    prior_qw   REAL,"
-      "    prior_qx   REAL,"
-      "    prior_qy   REAL,"
-      "    prior_qz   REAL,"
-      "    prior_tx   REAL,"
-      "    prior_ty   REAL,"
-      "    prior_tz   REAL,"
+      "   (image_id         INTEGER  PRIMARY KEY AUTOINCREMENT  NOT NULL,"
+      "    name             TEXT                                NOT NULL UNIQUE,"
+      "    camera_id        INTEGER                             NOT NULL,"
+      "    prior_qw         REAL,"
+      "    prior_qx         REAL,"
+      "    prior_qy         REAL,"
+      "    prior_qz         REAL,"
+      "    prior_tx         REAL,"
+      "    prior_ty         REAL,"
+      "    prior_tz         REAL,"
+      "    prior_gravity_x  REAL,"
+      "    prior_gravity_y  REAL,"
+      "    prior_gravity_z  REAL,"
       "CONSTRAINT image_id_check CHECK(image_id >= 0 and image_id < %d),"
       "FOREIGN KEY(camera_id) REFERENCES cameras(camera_id));"
       "CREATE UNIQUE INDEX IF NOT EXISTS index_name ON images(name);",

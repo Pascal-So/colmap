@@ -160,6 +160,7 @@ BOOST_AUTO_TEST_CASE(TestImage) {
   image.SetCameraId(camera.CameraId());
   image.SetQvecPrior(Eigen::Vector4d(0.1, 0.2, 0.3, 0.4));
   image.SetTvecPrior(Eigen::Vector3d(0.1, 0.2, 0.3));
+  image.SetGravityPrior(Eigen::Vector3d(0.7, 0.8, 0.9));
   image.SetImageId(database.WriteImage(image));
   BOOST_CHECK_EQUAL(database.NumImages(), 1);
   BOOST_CHECK_EQUAL(database.ExistsImage(image.ImageId()), true);
@@ -181,7 +182,14 @@ BOOST_AUTO_TEST_CASE(TestImage) {
                     image.TvecPrior(1));
   BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).TvecPrior(2),
                     image.TvecPrior(2));
+  BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).GravityPrior(0),
+                    image.GravityPrior(0));
+  BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).GravityPrior(1),
+                    image.GravityPrior(1));
+  BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).GravityPrior(2),
+                    image.GravityPrior(2));
   image.TvecPrior(0) += 2;
+  image.GravityPrior(1) += 5;
   database.UpdateImage(image);
   BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).ImageId(),
                     image.ImageId());
@@ -201,6 +209,12 @@ BOOST_AUTO_TEST_CASE(TestImage) {
                     image.TvecPrior(1));
   BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).TvecPrior(2),
                     image.TvecPrior(2));
+  BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).GravityPrior(0),
+                    image.GravityPrior(0));
+  BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).GravityPrior(1),
+                    image.GravityPrior(1));
+  BOOST_CHECK_EQUAL(database.ReadImage(image.ImageId()).GravityPrior(2),
+                    image.GravityPrior(2));
   Image image2 = image;
   image2.SetName("test2");
   image2.SetImageId(image.ImageId() + 1);
