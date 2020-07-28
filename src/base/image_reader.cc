@@ -34,6 +34,8 @@
 #include "base/camera_models.h"
 #include "util/misc.h"
 
+#include <fstream>
+
 namespace colmap {
 
 bool ImageReaderOptions::Check() const {
@@ -81,6 +83,29 @@ ImageReader::ImageReader(const ImageReaderOptions& options, Database* database)
       prev_camera_.SetPriorFocalLength(true);
     }
   }
+}
+
+Eigen::Vector3d ReadGravityPrior(const std::string& image_path) {
+  // We assume that for every image for which the measured gravity direction is
+  // available, there is a file located in the same directory with the same name
+  // but the extension changed to .txt, e.g. "image_path/asdf/0001.jpg" has
+  // "image_path/asdf/0001.txt" next to it.
+
+  std::string root, ext;
+  SplitFileExtension(image_path, &root, &ext);
+
+  const std::string gravity_file_path = root + ".txt";
+
+  Eigen::Vector3d gravity_prior;
+
+  std::ifstream gravity_file(gravity_file_path);
+  if (gravity_file.is_open()) {
+    gravity_file >> gravity_prior(0) >> gravity_prior(1) >> gravity_prior(2);
+  } else {
+    gravity_prior.setConstant(std::numeric_limits<double>::quiet_NaN());
+  }
+
+  return gravity_prior;
 }
 
 ImageReader::Status ImageReader::Next(Camera* camera, Image* image,
@@ -227,6 +252,8 @@ ImageReader::Status ImageReader::Next(Camera* camera, Image* image,
         !bitmap->ExifAltitude(&image->TvecPrior(2))) {
       image->TvecPrior().setConstant(std::numeric_limits<double>::quiet_NaN());
     }
+
+    image->SetGravityPrior(ReadGravityPrior(image_path));
   }
 
   *camera = prev_camera_;

@@ -141,6 +141,13 @@ class Image {
   inline bool HasTvecPrior() const;
   inline void SetTvecPrior(const Eigen::Vector3d& tvec);
 
+  inline const Eigen::Vector3d& GravityPrior() const;
+  inline Eigen::Vector3d& GravityPrior();
+  inline double GravityPrior(const size_t idx) const;
+  inline double& GravityPrior(const size_t idx);
+  inline bool HasGravityPrior() const;
+  inline void SetGravityPrior(const Eigen::Vector3d& gravity);
+
   // Access the coordinates of image points.
   inline const class Point2D& Point2D(const point2D_t point2D_idx) const;
   inline class Point2D& Point2D(const point2D_t point2D_idx);
@@ -232,6 +239,10 @@ class Image {
   // The pose prior of the image, e.g. extracted from EXIF tags.
   Eigen::Vector4d qvec_prior_;
   Eigen::Vector3d tvec_prior_;
+
+  // The direction of gravity in camera space, e.g. obtained from the camera's
+  // accelerometer.
+  Eigen::Vector3d gravity_prior_;
 
   // All image points, including points that are not part of a 3D point track.
   std::vector<class Point2D> points2D_;
@@ -342,6 +353,22 @@ inline double& Image::TvecPrior(const size_t idx) { return tvec_prior_(idx); }
 inline bool Image::HasTvecPrior() const { return !IsNaN(tvec_prior_.sum()); }
 
 void Image::SetTvecPrior(const Eigen::Vector3d& tvec) { tvec_prior_ = tvec; }
+
+const Eigen::Vector3d& Image::GravityPrior() const { return gravity_prior_; }
+
+Eigen::Vector3d& Image::GravityPrior() { return gravity_prior_; }
+
+inline double Image::GravityPrior(const size_t idx) const {
+  return gravity_prior_(idx);
+}
+
+inline double& Image::GravityPrior(const size_t idx) { return gravity_prior_(idx); }
+
+inline bool Image::HasGravityPrior() const { return !IsNaN(gravity_prior_.sum()); }
+
+void Image::SetGravityPrior(const Eigen::Vector3d& gravity) {
+  gravity_prior_ = gravity;
+}
 
 const class Point2D& Image::Point2D(const point2D_t point2D_idx) const {
   return points2D_.at(point2D_idx);
