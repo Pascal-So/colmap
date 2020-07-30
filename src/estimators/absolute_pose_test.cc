@@ -43,6 +43,90 @@
 
 using namespace colmap;
 
+BOOST_AUTO_TEST_CASE(TestGravityAbsolutePoseEstimator) {
+  SetPRNGSeed(0);
+
+  std::vector<Eigen::Vector3d> points3D;
+  points3D.emplace_back(1, 1, 1);
+  points3D.emplace_back(2, 1.2, 4);
+
+  auto points3D_faulty = points3D;
+  for (size_t i = 0; i < points3D.size(); ++i) {
+    points3D_faulty[i](0) = 20;
+  }
+
+  const Eigen::Vector3d gravity(-0.126441, 0.907029, 0.401636);
+  const Eigen::Matrix3d rot_gravity =
+      Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d(0, 1, 0), gravity)
+          .toRotationMatrix();
+
+  for (double phi_y = 0; phi_y < 0.8; phi_y += 0.1) {
+    for (double pos_u = 0; pos_u < 1; pos_u += 0.2) {
+      for (double pos_v = 0; pos_u < 1; pos_u += 0.3) {
+        const Eigen::Matrix3d rot_y =
+            Eigen::AngleAxisd(phi_y, Eigen::Vector3d(0, 1, 0))
+                .toRotationMatrix();
+        const Eigen::Matrix3d rot_orig = rot_gravity * rot_y;
+
+        const Eigen::Vector3d translate_orig(pos_u * 0.8, pos_u * 0.1,
+                                             pos_v * 0.5);
+
+        Eigen::Matrix3x4d orig_transform;
+        orig_transform << rot_orig, translate_orig;
+
+        const Eigen::Vector3d orig_gravity_vector = orig_transform.col(1);
+
+        // Project points to camera coordinate system.
+        std::vector<Eigen::Vector2d> points2D;
+        for (auto const& p : points3D) {
+          points2D.push_back((orig_transform * p.homogeneous()).hnormalized());
+        }
+
+        GravityAbsolutePoseEstimator estimator;
+        estimator.SetGravityVector(orig_gravity_vector);
+        const auto models = estimator.Estimate(points2D, points3D);
+        BOOST_CHECK(models.size() > 0);
+
+        int correct_model_index = -1;
+
+        for (std::size_t i = 0; i < models.size(); ++i) {
+          const double matrix_diff = (orig_transform - models[i]).norm();
+          if (matrix_diff < 1e-2) {
+            correct_model_index = i;
+            break;
+          }
+        }
+
+        BOOST_CHECK(correct_model_index > -1);
+
+        if (correct_model_index > -1) {
+          const auto& model = models[correct_model_index];
+
+          // Test if gravity vector is correct on the resulting model.
+          const double gravity_vector_diff =
+              (orig_gravity_vector - model.col(1)).squaredNorm();
+          BOOST_CHECK(gravity_vector_diff < 1e-8);
+
+          // Test residuals of exact points.
+          std::vector<double> residuals;
+          GravityAbsolutePoseEstimator::Residuals(points2D, points3D, model,
+                                                  &residuals);
+          for (size_t i = 0; i < residuals.size(); ++i) {
+            BOOST_CHECK(residuals[i] < 1e-3);
+          }
+
+          // Test residuals of faulty points.
+          GravityAbsolutePoseEstimator::Residuals(points2D, points3D_faulty,
+                                                  model, &residuals);
+          for (size_t i = 0; i < residuals.size(); ++i) {
+            BOOST_CHECK(residuals[i] > 0.1);
+          }
+        }
+      }
+    }
+  }
+}
+
 BOOST_AUTO_TEST_CASE(TestP3P) {
   SetPRNGSeed(0);
 
