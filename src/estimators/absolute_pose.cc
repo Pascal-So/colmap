@@ -32,6 +32,7 @@
 #include "estimators/absolute_pose.h"
 
 #include "base/polynomial.h"
+#include "base/pose.h"
 #include "estimators/utils.h"
 #include "util/logging.h"
 
@@ -43,6 +44,108 @@ Eigen::Vector3d LiftImagePoint(const Eigen::Vector2d& point) {
 }
 
 }  // namespace
+
+GravityAbsolutePoseEstimator::GravityAbsolutePoseEstimator() {
+  // See equation 7 in Z. Kukelova, M. Bujnak, and T. Pajdla. 2010
+
+  // We store the coefficients for the constant, linear, and quadratic terms
+  // wtr. q in the matrix R_y.
+
+  rot_y_const_ = Eigen::Matrix3d::Identity();
+  rot_y_q_ <<
+    0, 0, -2,
+    0, 0, 0,
+    2, 0, 0;
+  rot_y_q2_ <<
+    -1, 0, 0,
+    0, 1, 0,
+    0, 0, -1;
+}
+
+void GravityAbsolutePoseEstimator::SetGravityVector(
+    const Eigen::Vector3d& gravity) {
+  // The y axis points down in COLMAP convention...
+  const Eigen::Vector3d world_down(0, 1, 0);
+  rot_gravity_ = Eigen::Quaterniond::FromTwoVectors(world_down, gravity);
+}
+
+std::vector<GravityAbsolutePoseEstimator::M_t>
+GravityAbsolutePoseEstimator::Estimate(const std::vector<X_t>& points2D,
+                                       const std::vector<Y_t>& points3D) {
+  CHECK_EQ(points2D.size(), points3D.size());
+
+  const std::size_t nr_correspondences = points2D.size();
+
+  // The columns in A correspond to: tx, ty, tz, q, q^2
+
+  Eigen::Matrix<double, Eigen::Dynamic, 5> A(3 * nr_correspondences, 5);
+  Eigen::VectorXd v(3 * nr_correspondences);
+
+  // assemble A and v such that A * tq + v = 0
+
+  for (std::size_t i = 0; i < nr_correspondences; ++i) {
+    const Eigen::Matrix3d skew_u = CrossProductMatrix(
+        Eigen::Vector3d(points2D[i](0), points2D[i](1), 1.0));
+
+    A.block<3, 3>(i * 3, 0) = skew_u;
+    A.block<3, 1>(i * 3, 3) = skew_u * rot_gravity_ * rot_y_q_ * points3D[i];
+    A.block<3, 1>(i * 3, 4) = skew_u * rot_gravity_ * rot_y_q2_ * points3D[i];
+    v.segment<3>(i * 3) = skew_u * rot_gravity_ * rot_y_const_ * points3D[i];
+  }
+
+  // We want to get a single equation where tx ty tz are eliminated and only q
+  // and q^2 occur.
+
+  auto qr_decomp = A.householderQr();
+
+  // todo: Maybe it's possible to only apply the part of the householder
+  // sequence until we get the required coefficients.
+  Eigen::Vector4d Qv = (qr_decomp.householderQ().inverse() * v).head<4>();
+  Eigen::Matrix<double, 5, 5> R =
+      qr_decomp.matrixQR().topLeftCorner<5, 5>().triangularView<Eigen::Upper>();
+
+  Eigen::VectorXd roots_real, roots_imag;
+  FindQuadraticPolynomialRoots(Eigen::Vector3d(R(3, 4), R(3, 3), Qv(3)),
+                               &roots_real, &roots_imag);
+
+  std::vector<GravityAbsolutePoseEstimator::M_t> models;
+
+  if (roots_imag(0) != 0) {
+    return models;
+  }
+
+  const Eigen::JacobiSVD<Eigen::MatrixXd> svd_A(
+      A.topLeftCorner(A.rows(), 3), Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+  for (std::size_t i = 0; i < 2; ++i) {
+    // Here we solve for tx, ty, tz with known q. The columns of R corresponding
+    // to q and q^2 are moved to the right hand side, then we can solve by
+    // substitution.
+
+    const double q = roots_real(i);
+    const double q2 = q * q;
+    const Eigen::Matrix3d rot_y =
+        (rot_y_const_ + rot_y_q_ * q + rot_y_q2_ * q2) / (1 + q2);
+    const Eigen::Matrix3d rot_total = rot_gravity_ * rot_y;
+
+    const Eigen::VectorXd rhs = -(A.col(3) * q + A.col(4) * q2 + v) / (1 + q2);
+    const Eigen::Vector3d t = svd_A.solve(rhs);
+
+    Eigen::Matrix3x4d model;
+    model << rot_total, t;
+
+    models.push_back(model);
+  }
+
+  return models;
+}
+
+void GravityAbsolutePoseEstimator::Residuals(const std::vector<X_t>& points2D,
+                                             const std::vector<Y_t>& points3D,
+                                             const M_t& proj_matrix,
+                                             std::vector<double>* residuals) {
+  ComputeSquaredReprojectionError(points2D, points3D, proj_matrix, residuals);
+}
 
 std::vector<P3PEstimator::M_t> P3PEstimator::Estimate(
     const std::vector<X_t>& points2D, const std::vector<Y_t>& points3D) {

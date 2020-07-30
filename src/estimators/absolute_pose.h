@@ -42,6 +42,60 @@
 
 namespace colmap {
 
+// Absolute Pose from two 2D-3D correspondences and known vertical direction.
+//
+// The algorithm is based on the following paper:
+//
+//    Z. Kukelova, M. Bujnak, T. Pajkla. Closed-form solutions to the minimal
+//    absolute pose problems with known vertical direction.
+class GravityAbsolutePoseEstimator {
+ public:
+  // The 2D image feature observations.
+  typedef Eigen::Vector2d X_t;
+  // The observed 3D features in the world frame.
+  typedef Eigen::Vector3d Y_t;
+  // The transformation from the world to the camera frame.
+  typedef Eigen::Matrix3x4d M_t;
+
+  // The minimum number of samples needed to estimate a model.
+  static const int kMinNumSamples = 2;
+
+  GravityAbsolutePoseEstimator();
+
+  void SetGravityVector(const Eigen::Vector3d& gravity);
+
+  // Estimate the most probable pose based on the given correspondences and the
+  // gravity vector in the state of the GravityAbsolutePoseEstimator object.
+  //
+  // @param points2D   Normalized 2D image points as 2D vectors.
+  // @param points3D   3D world points as 3D vectors.
+  std::vector<M_t> Estimate(const std::vector<X_t>& points2D,
+                            const std::vector<Y_t>& points3D);
+
+  // Calculate the squared reprojection error given a set of 2D-3D point
+  // correspondences and a projection matrix.
+  //
+  // @param points2D     Normalized 2D image points as Nx2 matrix.
+  // @param points3D     3D world points as Nx3 matrix.
+  // @param proj_matrix  3x4 projection matrix.
+  // @param residuals    Output vector of residuals.
+  static void Residuals(const std::vector<X_t>& points2D,
+                        const std::vector<Y_t>& points3D,
+                        const M_t& proj_matrix, std::vector<double>* residuals);
+
+ private:
+  // The rotation of the camera is split up into two parts: one that aligns the
+  // given gravity vector (`rot_gravity`), and the other part that deals with
+  // the remaining rotation around the global y (vertical) axis.
+  Eigen::Quaterniond rot_gravity_;
+  // The coefficients in this y rotation matrix are quadratic polynomials in
+  // q = tan(phi_y) / 2. We store the matrix decomposed into constant terms,
+  // coefficients of q, and coefficients of q^2.
+  Eigen::Matrix3d rot_y_const_;
+  Eigen::Matrix3d rot_y_q_;
+  Eigen::Matrix3d rot_y_q2_;
+};
+
 // Analytic solver for the P3P (Perspective-Three-Point) problem.
 //
 // The algorithm is based on the following paper:
