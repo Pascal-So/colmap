@@ -32,3 +32,4 @@
 set(FOLDER_NAME "tools")
 
 # COLMAP_ADD_EXECUTABLE(example example.cc)
+COLMAP_ADD_EXECUTABLE(extract_gravity_vectors extract_gravity_vectors.cc)
