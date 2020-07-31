@@ -29,6 +29,8 @@
 //
 // Author: Johannes L. Schoenberger (jsch-at-demuc-dot-de)
 
+#include <type_traits>
+
 #include "estimators/pose.h"
 
 #include "base/camera_models.h"
@@ -46,12 +48,24 @@ namespace colmap {
 namespace {
 
 typedef LORANSAC<P3PEstimator, EPNPEstimator> AbsolutePoseRANSAC;
+typedef LORANSAC<GravityAbsolutePoseEstimator, EPNPEstimator>
+    GravityAbsolutePoseRANSAC;
+
+static_assert(
+    std::is_same<P3PEstimator::X_t, GravityAbsolutePoseEstimator::X_t>::value &&
+        std::is_same<P3PEstimator::Y_t,
+                     GravityAbsolutePoseEstimator::Y_t>::value &&
+        std::is_same<P3PEstimator::M_t,
+                     GravityAbsolutePoseEstimator::M_t>::value,
+    "The input and output types for the different absolute pose estimators "
+    "should match.");
 
 void EstimateAbsolutePoseKernel(const Camera& camera,
                                 const double focal_length_factor,
                                 const std::vector<Eigen::Vector2d>& points2D,
                                 const std::vector<Eigen::Vector3d>& points3D,
                                 const RANSACOptions& options,
+                                const PosePriorInfo& pose_prior_info,
                                 AbsolutePoseRANSAC::Report* report) {
   // Scale the focal length by the given factor.
   Camera scaled_camera = camera;
@@ -70,8 +84,18 @@ void EstimateAbsolutePoseKernel(const Camera& camera,
   auto custom_options = options;
   custom_options.max_error =
       scaled_camera.ImageToWorldThreshold(options.max_error);
-  AbsolutePoseRANSAC ransac(custom_options);
-  *report = ransac.Estimate(points2D_N, points3D);
+
+  if (pose_prior_info.gravity) {
+    GravityAbsolutePoseRANSAC ransac(custom_options);
+    ransac.estimator.SetGravityVector(*pose_prior_info.gravity);
+    // This is safe, the static_assert at the top of this file makes sure that
+    // the internal representation of these two structs is the exact same.
+    *reinterpret_cast<GravityAbsolutePoseRANSAC::Report*>(report) =
+        ransac.Estimate(points2D_N, points3D);
+  } else {
+    AbsolutePoseRANSAC ransac(custom_options);
+    *report = ransac.Estimate(points2D_N, points3D);
+  }
 }
 
 }  // namespace
@@ -81,7 +105,8 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
                           const std::vector<Eigen::Vector3d>& points3D,
                           Eigen::Vector4d* qvec, Eigen::Vector3d* tvec,
                           Camera* camera, size_t* num_inliers,
-                          std::vector<char>* inlier_mask) {
+                          std::vector<char>* inlier_mask,
+                          const PosePriorInfo& pose_prior_info) {
   options.Check();
 
   std::vector<double> focal_length_factors;
@@ -114,7 +139,7 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
   for (size_t i = 0; i < focal_length_factors.size(); ++i) {
     futures[i] = thread_pool.AddTask(
         EstimateAbsolutePoseKernel, *camera, focal_length_factors[i], points2D,
-        points3D, options.ransac_options, &reports[i]);
+        points3D, options.ransac_options, pose_prior_info, &reports[i]);
   }
 
   double focal_length_factor = 0;

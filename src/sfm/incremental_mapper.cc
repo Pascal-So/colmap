@@ -485,9 +485,14 @@ bool IncrementalMapper::RegisterNextImage(const Options& options,
   size_t num_inliers;
   std::vector<char> inlier_mask;
 
+  PosePriorInfo pose_prior_info;
+  if (image.HasGravityPrior()) {
+    pose_prior_info.gravity = image.GravityPrior();
+  }
+
   if (!EstimateAbsolutePose(abs_pose_options, tri_points2D, tri_points3D,
                             &image.Qvec(), &image.Tvec(), &camera, &num_inliers,
-                            &inlier_mask)) {
+                            &inlier_mask, pose_prior_info)) {
     return false;
   }
 

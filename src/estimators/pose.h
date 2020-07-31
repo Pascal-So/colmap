@@ -36,6 +36,8 @@
 
 #include <Eigen/Core>
 
+#include <boost/optional.hpp>
+
 #include <ceres/ceres.h>
 
 #include "base/camera.h"
@@ -66,7 +68,7 @@ struct AbsolutePoseEstimationOptions {
   // Number of threads for parallel estimation of focal length.
   int num_threads = ThreadPool::kMaxNumThreads;
 
-  // Options used for P3P RANSAC.
+  // Options used for RANSAC.
   RANSACOptions ransac_options;
 
   void Check() const {
@@ -76,6 +78,10 @@ struct AbsolutePoseEstimationOptions {
     CHECK_LT(min_focal_length_ratio, max_focal_length_ratio);
     ransac_options.Check();
   }
+};
+
+struct PosePriorInfo {
+  boost::optional<Eigen::Vector3d> gravity = boost::none;
 };
 
 struct AbsolutePoseRefinementOptions {
@@ -127,7 +133,8 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
                           const std::vector<Eigen::Vector3d>& points3D,
                           Eigen::Vector4d* qvec, Eigen::Vector3d* tvec,
                           Camera* camera, size_t* num_inliers,
-                          std::vector<char>* inlier_mask);
+                          std::vector<char>* inlier_mask,
+                          const PosePriorInfo& pose_prior_info);
 
 // Estimate relative from 2D-2D correspondences.
 //
