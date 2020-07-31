@@ -117,7 +117,7 @@ GravityAbsolutePoseEstimator::Estimate(const std::vector<X_t>& points2D,
   const Eigen::JacobiSVD<Eigen::MatrixXd> svd_A(
       A.topLeftCorner(A.rows(), 3), Eigen::ComputeThinU | Eigen::ComputeThinV);
 
-  for (std::size_t i = 0; i < 2; ++i) {
+  for (int i = 0; i < roots_real.size(); ++i) {
     // Here we solve for tx, ty, tz with known q. The columns of R corresponding
     // to q and q^2 are moved to the right hand side, then we can solve by
     // substitution.
