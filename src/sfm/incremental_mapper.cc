@@ -491,8 +491,8 @@ bool IncrementalMapper::RegisterNextImage(const Options& options,
   }
 
   if (!EstimateAbsolutePose(abs_pose_options, tri_points2D, tri_points3D,
-                            &image.Qvec(), &image.Tvec(), &camera, &num_inliers,
-                            &inlier_mask, pose_prior_info)) {
+                            pose_prior_info, &image.Qvec(), &image.Tvec(),
+                            &camera, &num_inliers, &inlier_mask)) {
     return false;
   }
 
