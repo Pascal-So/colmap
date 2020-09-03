@@ -103,10 +103,10 @@ void EstimateAbsolutePoseKernel(const Camera& camera,
 bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
                           const std::vector<Eigen::Vector2d>& points2D,
                           const std::vector<Eigen::Vector3d>& points3D,
+                          const PosePriorInfo& pose_prior_info,
                           Eigen::Vector4d* qvec, Eigen::Vector3d* tvec,
                           Camera* camera, size_t* num_inliers,
-                          std::vector<char>* inlier_mask,
-                          const PosePriorInfo& pose_prior_info) {
+                          std::vector<char>* inlier_mask) {
   options.Check();
 
   std::vector<double> focal_length_factors;
