@@ -31,9 +31,11 @@
 
 #include "sfm/incremental_mapper.h"
 
+#include <algorithm>
 #include <array>
 #include <fstream>
 
+#include "base/gravity_relative_pose.h"
 #include "base/projection.h"
 #include "base/triangulation.h"
 #include "estimators/pose.h"
@@ -123,7 +125,8 @@ void IncrementalMapper::BeginReconstruction(Reconstruction* reconstruction) {
                                   reconstruction->RegImageIds().end());
 
   prev_init_image_pair_id_ = kInvalidImagePairId;
-  prev_init_two_view_geometry_ = TwoViewGeometry();
+  prev_init_poses_[0] = Pose();
+  prev_init_poses_[1] = Pose();
 
   filtered_images_.clear();
   num_reg_trials_.clear();
@@ -186,7 +189,7 @@ bool IncrementalMapper::FindInitialImagePair(const Options& options,
 
       init_image_pairs_.insert(pair_id);
 
-      if (EstimateInitialTwoViewGeometry(options, *image_id1, *image_id2)) {
+      if (EstimateInitialPoses(options, *image_id1, *image_id2)) {
         return true;
       }
     }
@@ -282,14 +285,14 @@ bool IncrementalMapper::RegisterInitialImagePair(const Options& options,
   // Estimate two-view geometry
   //////////////////////////////////////////////////////////////////////////////
 
-  if (!EstimateInitialTwoViewGeometry(options, image_id1, image_id2)) {
+  if (!EstimateInitialPoses(options, image_id1, image_id2)) {
     return false;
   }
 
-  image1.Qvec() = ComposeIdentityQuaternion();
-  image1.Tvec() = Eigen::Vector3d(0, 0, 0);
-  image2.Qvec() = prev_init_two_view_geometry_.qvec;
-  image2.Tvec() = prev_init_two_view_geometry_.tvec;
+  image1.Qvec() = prev_init_poses_[0].qvec;
+  image1.Tvec() = prev_init_poses_[0].tvec;
+  image2.Qvec() = prev_init_poses_[1].qvec;
+  image2.Tvec() = prev_init_poses_[1].tvec;
 
   const Eigen::Matrix3x4d proj_matrix1 = image1.ProjectionMatrix();
   const Eigen::Matrix3x4d proj_matrix2 = image2.ProjectionMatrix();
@@ -1144,8 +1147,9 @@ void IncrementalMapper::DeRegisterImageEvent(const image_t image_id) {
   }
 }
 
-bool IncrementalMapper::EstimateInitialTwoViewGeometry(
-    const Options& options, const image_t image_id1, const image_t image_id2) {
+bool IncrementalMapper::EstimateInitialPoses(const Options& options,
+                                             const image_t image_id1,
+                                             const image_t image_id2) {
   const image_pair_t image_pair_id =
       Database::ImagePairToPairId(image_id1, image_id2);
 
@@ -1153,11 +1157,12 @@ bool IncrementalMapper::EstimateInitialTwoViewGeometry(
     return true;
   }
 
-  const Image& image1 = database_cache_->Image(image_id1);
-  const Camera& camera1 = database_cache_->Camera(image1.CameraId());
+  const std::array<Image, 2> images{database_cache_->Image(image_id1),
+                                    database_cache_->Image(image_id2)};
 
-  const Image& image2 = database_cache_->Image(image_id2);
-  const Camera& camera2 = database_cache_->Camera(image2.CameraId());
+  const std::array<Camera, 2> cameras{
+      database_cache_->Camera(images[0].CameraId()),
+      database_cache_->Camera(images[1].CameraId())};
 
   const CorrespondenceGraph& correspondence_graph =
       database_cache_->CorrespondenceGraph();
@@ -1165,37 +1170,59 @@ bool IncrementalMapper::EstimateInitialTwoViewGeometry(
       correspondence_graph.FindCorrespondencesBetweenImages(image_id1,
                                                             image_id2);
 
-  std::vector<Eigen::Vector2d> points1;
-  points1.reserve(image1.NumPoints2D());
-  for (const auto& point : image1.Points2D()) {
-    points1.push_back(point.XY());
-  }
+  if (images[0].HasGravityPrior() && images[1].HasGravityPrior()) {
+    RANSACOptions ransac_options;
+    ransac_options.min_num_trials = 30;
+    ransac_options.max_error =
+        std::max(cameras[0].ImageToWorldThreshold(options.init_max_error),
+                 cameras[1].ImageToWorldThreshold(options.init_max_error));
 
-  std::vector<Eigen::Vector2d> points2;
-  points2.reserve(image2.NumPoints2D());
-  for (const auto& point : image2.Points2D()) {
-    points2.push_back(point.XY());
-  }
+    std::array<Pose, 2> poses;
+    const int num_inliers = EstimateRelativePoseGravity(
+        images, cameras, matches, ransac_options, &poses);
+    if (num_inliers > options.init_min_num_inliers) {
+      prev_init_image_pair_id_ = image_pair_id;
+      prev_init_poses_ = poses;
+      return true;
+    }
 
-  TwoViewGeometry two_view_geometry;
-  TwoViewGeometry::Options two_view_geometry_options;
-  two_view_geometry_options.ransac_options.min_num_trials = 30;
-  two_view_geometry_options.ransac_options.max_error = options.init_max_error;
-  two_view_geometry.EstimateCalibrated(camera1, points1, camera2, points2,
-                                       matches, two_view_geometry_options);
+  } else {
+    std::array<std::vector<Eigen::Vector2d>, 2> points;
+    for (int i : {0, 1}) {
+      points[i].reserve(images[i].NumPoints2D());
+      for (const auto& point : images[i].Points2D()) {
+        points[i].push_back(point.XY());
+      }
+    }
 
-  if (!two_view_geometry.EstimateRelativePose(camera1, points1, camera2,
-                                              points2)) {
-    return false;
-  }
+    TwoViewGeometry two_view_geometry;
+    TwoViewGeometry::Options two_view_geometry_options;
+    two_view_geometry_options.ransac_options.min_num_trials = 30;
+    two_view_geometry_options.ransac_options.max_error = options.init_max_error;
+    two_view_geometry.EstimateCalibrated(cameras[0], points[0], cameras[1],
+                                         points[1], matches,
+                                         two_view_geometry_options);
 
-  if (static_cast<int>(two_view_geometry.inlier_matches.size()) >=
-          options.init_min_num_inliers &&
-      std::abs(two_view_geometry.tvec.z()) < options.init_max_forward_motion &&
-      two_view_geometry.tri_angle > DegToRad(options.init_min_tri_angle)) {
-    prev_init_image_pair_id_ = image_pair_id;
-    prev_init_two_view_geometry_ = two_view_geometry;
-    return true;
+    if (!two_view_geometry.EstimateRelativePose(cameras[0], points[0],
+                                                cameras[1], points[1])) {
+      return false;
+    }
+
+    if (static_cast<int>(two_view_geometry.inlier_matches.size()) >=
+            options.init_min_num_inliers &&
+        std::abs(two_view_geometry.tvec.z()) <
+            options.init_max_forward_motion &&
+        two_view_geometry.tri_angle > DegToRad(options.init_min_tri_angle)) {
+      prev_init_image_pair_id_ = image_pair_id;
+
+      // Todo: fix rotation if one of them has gravity prior
+
+      prev_init_poses_[0].qvec = ComposeIdentityQuaternion();
+      prev_init_poses_[0].tvec = Eigen::Vector3d(0, 0, 0);
+      prev_init_poses_[1].qvec = two_view_geometry.qvec;
+      prev_init_poses_[1].tvec = two_view_geometry.tvec;
+      return true;
+    }
   }
 
   return false;

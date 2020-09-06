@@ -42,6 +42,7 @@ COLMAP_ADD_SOURCES(
     essential_matrix.h essential_matrix.cc
     gps.h gps.cc
     graph_cut.h graph_cut.cc
+    gravity_relative_pose.h gravity_relative_pose.cc
     homography_matrix.h homography_matrix.cc
     image.h image.cc
     image_reader.h image_reader.cc

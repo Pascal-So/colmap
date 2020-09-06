@@ -69,6 +69,10 @@ Eigen::Matrix3d EulerAnglesToRotationMatrix(const double rx, const double ry,
 
 Eigen::Vector4d RotationMatrixToQuaternion(const Eigen::Matrix3d& rot_mat) {
   const Eigen::Quaterniond quat(rot_mat);
+  return EigenQuaternionToQuaternion(quat);
+}
+
+Eigen::Vector4d EigenQuaternionToQuaternion(const Eigen::Quaterniond& quat) {
   return Eigen::Vector4d(quat.w(), quat.x(), quat.y(), quat.z());
 }
 
@@ -103,8 +107,7 @@ Eigen::Vector4d ConcatenateQuaternions(const Eigen::Vector4d& qvec1,
   const Eigen::Quaterniond quat2(normalized_qvec2(0), normalized_qvec2(1),
                                  normalized_qvec2(2), normalized_qvec2(3));
   const Eigen::Quaterniond cat_quat = quat2 * quat1;
-  return NormalizeQuaternion(
-      Eigen::Vector4d(cat_quat.w(), cat_quat.x(), cat_quat.y(), cat_quat.z()));
+  return NormalizeQuaternion(EigenQuaternionToQuaternion(cat_quat));
 }
 
 Eigen::Vector3d QuaternionRotatePoint(const Eigen::Vector4d& qvec,
@@ -209,7 +212,7 @@ void InterpolatePose(const Eigen::Vector4d& qvec1, const Eigen::Vector3d& tvec1,
 
   const Eigen::Quaterniond quati = quat1.slerp(t, quat2);
 
-  *qveci = Eigen::Vector4d(quati.w(), quati.x(), quati.y(), quati.z());
+  *qveci = EigenQuaternionToQuaternion(quati);
   *tveci = tvec1 + tvec12 * t;
 }
 
