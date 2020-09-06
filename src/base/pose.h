@@ -72,6 +72,13 @@ Eigen::Matrix3d EulerAnglesToRotationMatrix(const double rx, const double ry,
 // @return               Unit Quaternion rotation coefficients (w, x, y, z).
 Eigen::Vector4d RotationMatrixToQuaternion(const Eigen::Matrix3d& rot_mat);
 
+// Convert Eigen::Quaternion4d to COLMAP Quaternion aka Eigen::Vector4d.
+//
+// @param quat           Unit Quaternion.
+//
+// @return               Unit Quaternion rotation coefficients (w, x, y, z).
+Eigen::Vector4d EigenQuaternionToQuaternion(const Eigen::Quaterniond& quat);
+
 // Convert Quaternion representation to 3D rotation matrix.
 //
 // @param qvec           Unit Quaternion rotation coefficients (w, x, y, z).
@@ -216,6 +223,12 @@ bool CheckCheirality(const Eigen::Matrix3d& R, const Eigen::Vector3d& t,
                      const std::vector<Eigen::Vector2d>& points1,
                      const std::vector<Eigen::Vector2d>& points2,
                      std::vector<Eigen::Vector3d>* points3D);
+
+struct Pose {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  Eigen::Vector4d qvec = ComposeIdentityQuaternion();
+  Eigen::Vector3d tvec = Eigen::Vector3d::Zero();
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Implementation

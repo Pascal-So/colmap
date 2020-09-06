@@ -32,8 +32,11 @@
 #ifndef COLMAP_SRC_SFM_INCREMENTAL_MAPPER_H_
 #define COLMAP_SRC_SFM_INCREMENTAL_MAPPER_H_
 
+#include <array>
+
 #include "base/database.h"
 #include "base/database_cache.h"
+#include "base/pose.h"
 #include "base/reconstruction.h"
 #include "optim/bundle_adjustment.h"
 #include "sfm/incremental_triangulator.h"
@@ -256,9 +259,12 @@ class IncrementalMapper {
   void RegisterImageEvent(const image_t image_id);
   void DeRegisterImageEvent(const image_t image_id);
 
-  bool EstimateInitialTwoViewGeometry(const Options& options,
-                                      const image_t image_id1,
-                                      const image_t image_id2);
+  // Given a pair of image ids compute the poses of those images
+  // in `prev_init_poses_`.
+  // The pose of the first image is usually the neutral pose, but in the case
+  // of given prior information it could be something else.
+  bool EstimateInitialPoses(const Options& options, const image_t image_id1,
+                            const image_t image_id2);
 
   // Class that holds all necessary data from database in memory.
   const DatabaseCache* database_cache_;
@@ -276,10 +282,10 @@ class IncrementalMapper {
   // previous reconstructions.
   size_t num_shared_reg_images_;
 
-  // Estimated two-view geometry of last call to `FindFirstInitialImage`,
-  // used as a cache for a subsequent call to `RegisterInitialImagePair`.
+  // Estimated poses of last call to `FindFirstInitialImage`, used as a
+  // cache for a subsequent call to `RegisterInitialImagePair`.
   image_pair_t prev_init_image_pair_id_;
-  TwoViewGeometry prev_init_two_view_geometry_;
+  std::array<Pose, 2> prev_init_poses_;
 
   // Images and image pairs that have been used for initialization. Each image
   // and image pair is only tried once for initialization.

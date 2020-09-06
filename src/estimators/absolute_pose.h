@@ -83,6 +83,8 @@ class GravityAbsolutePoseEstimator {
                         const std::vector<Y_t>& points3D,
                         const M_t& proj_matrix, std::vector<double>* residuals);
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
  private:
   // The rotation of the camera is split up into two parts: one that aligns the
   // given gravity vector (`rot_gravity`), and the other part that deals with
