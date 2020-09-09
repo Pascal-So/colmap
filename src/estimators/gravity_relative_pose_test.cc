@@ -80,8 +80,10 @@ BOOST_AUTO_TEST_CASE(Estimate) {
         BOOST_CHECK_LE(candidates.size(), 4);
 
         bool ok;
+        int index = -1;
         for (auto c : candidates) {
           ok = true;
+          ++index;
 
           if (std::abs(c.qvec.squaredNorm() - 1) > 1e-5)
             ok = false;
@@ -105,6 +107,13 @@ BOOST_AUTO_TEST_CASE(Estimate) {
         }
 
         BOOST_CHECK(ok);
+
+        std::vector<double> residuals;
+        est.Residuals(points1, points2, candidates[index], &residuals);
+
+        for (double r : residuals) {
+          BOOST_CHECK_SMALL(r, 1e-8);
+        }
       }
     }
   }

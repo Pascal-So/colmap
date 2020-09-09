@@ -79,6 +79,13 @@ Eigen::Vector4d RotationMatrixToQuaternion(const Eigen::Matrix3d& rot_mat);
 // @return               Unit Quaternion rotation coefficients (w, x, y, z).
 Eigen::Vector4d EigenQuaternionToQuaternion(const Eigen::Quaterniond& quat);
 
+// Convert COLMAP Quaternion aka Eigen::Vector4d to Eigen::Quaternion4d.
+//
+// @param quat           Unit Quaternion rotation coefficients (w, x, y, z).
+//
+// @return               Unit Quaternion.
+Eigen::Quaterniond QuaternionToEigenQuaternion(const Eigen::Vector4d& quat);
+
 // Convert Quaternion representation to 3D rotation matrix.
 //
 // @param qvec           Unit Quaternion rotation coefficients (w, x, y, z).
