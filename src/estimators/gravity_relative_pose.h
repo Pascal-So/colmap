@@ -41,6 +41,7 @@
 namespace colmap {
 
 // Relative Pose from two 2D-2D correspondences with a known axis of rotation.
+// Translation is only computed up to a possibly negative factor.
 //
 // The algorithm is based on the following paper:
 //

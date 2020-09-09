@@ -31,6 +31,7 @@
 
 #include "base/gravity_relative_pose.h"
 
+#include "base/pose.h"
 #include "estimators/gravity_relative_pose.h"
 #include "optim/loransac.h"
 
@@ -41,14 +42,16 @@ unsigned EstimateRelativePoseGravity(const std::array<Image, 2>& images,
                                      const FeatureMatches matches,
                                      const RANSACOptions ransac_options,
                                      std::array<Pose, 2>* poses) {
+  const std::size_t nr_points = matches.size();
+
   const std::array<Eigen::Quaterniond, 2> rotations{
       AxisAlignmentFromImage(images[0]), AxisAlignmentFromImage(images[1])};
 
   std::array<std::vector<Eigen::Vector2d>, 2> normalized_rotated_keypoints;
-  normalized_rotated_keypoints[0].reserve(matches.size());
-  normalized_rotated_keypoints[1].reserve(matches.size());
+  normalized_rotated_keypoints[0].reserve(nr_points);
+  normalized_rotated_keypoints[1].reserve(nr_points);
 
-  for (std::size_t match_id = 0; match_id < matches.size(); ++match_id) {
+  for (std::size_t match_id = 0; match_id < nr_points; ++match_id) {
     const std::array<point2D_t, 2> idx{matches[match_id].point2D_idx1,
                                        matches[match_id].point2D_idx2};
 
@@ -65,17 +68,51 @@ unsigned EstimateRelativePoseGravity(const std::array<Image, 2>& images,
 
   LORANSAC<GravityRelativePoseEstimator, GravityRelativePoseEstimator> ransac(
       ransac_options);
+  ransac.estimator.SetRotationAxis(Eigen::Vector3d::UnitY());
 
   const auto ransac_report = ransac.Estimate(normalized_rotated_keypoints[0],
                                              normalized_rotated_keypoints[1]);
-
   if (!ransac_report.success) {
     return 0;
   }
+  const std::size_t nr_inliers = ransac_report.support.num_inliers;
 
-  // TODO: compute and assign poses
+  std::array<std::vector<Eigen::Vector2d>, 2> inlier_points;
+  for (auto i : {0, 1}) {
+    inlier_points[i].reserve(nr_inliers);
+    for (std::size_t point_id = 0; point_id < nr_points; ++point_id) {
+      if (ransac_report.inlier_mask[point_id]) {
+        inlier_points[i].push_back(normalized_rotated_keypoints[i][point_id]);
+      }
+    }
+  }
 
-  return ransac_report.support.num_inliers;
+  // Check the sign that the translation vector should have.
+  const Eigen::Matrix3d R =
+      QuaternionToRotationMatrix(ransac_report.model.qvec);
+  Eigen::Vector3d t = ransac_report.model.tvec;
+
+  std::vector<Eigen::Vector3d> points3D_in_front;
+  points3D_in_front.reserve(nr_inliers);
+  CheckCheirality(R, t, inlier_points[0], inlier_points[1], &points3D_in_front);
+
+  const std::size_t score_positive = points3D_in_front.size();
+
+  CheckCheirality(R, -t, inlier_points[0], inlier_points[1],
+                  &points3D_in_front);
+
+  if (points3D_in_front.size() > score_positive) {
+    t *= -1;
+  }
+
+  (*poses)[0].qvec = EigenQuaternionToQuaternion(rotations[0].conjugate());
+  (*poses)[0].tvec = Eigen::Vector3d::Zero();
+  (*poses)[1].qvec = EigenQuaternionToQuaternion(
+      rotations[1].conjugate() *
+      QuaternionToEigenQuaternion(ransac_report.model.qvec));
+  (*poses)[1].tvec = rotations[1].conjugate() * t;
+
+  return nr_inliers;
 }
 
 }  // namespace colmap

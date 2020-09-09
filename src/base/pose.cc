@@ -76,6 +76,10 @@ Eigen::Vector4d EigenQuaternionToQuaternion(const Eigen::Quaterniond& quat) {
   return Eigen::Vector4d(quat.w(), quat.x(), quat.y(), quat.z());
 }
 
+Eigen::Quaterniond QuaternionToEigenQuaternion(const Eigen::Vector4d& quat) {
+  return Eigen::Quaterniond(quat(0), quat(1), quat(2), quat(3));
+}
+
 Eigen::Matrix3d QuaternionToRotationMatrix(const Eigen::Vector4d& qvec) {
   const Eigen::Vector4d normalized_qvec = NormalizeQuaternion(qvec);
   const Eigen::Quaterniond quat(normalized_qvec(0), normalized_qvec(1),

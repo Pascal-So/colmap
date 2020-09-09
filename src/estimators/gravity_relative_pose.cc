@@ -81,27 +81,27 @@ std::vector<Pose> GravityRelativePoseEstimator::Estimate(
 
     candidate_solutions.reserve(4);
     for (int i = 0; i < 6; ++i) {
-      if (std::abs(eigensolver.eigenvalues()[i].imag()) < 0.01) {
+      if (std::abs(eigensolver.eigenvalues()[i].imag()) < 0.001) {
         const double s = eigensolver.eigenvalues()[i].real();
 
         Eigen::Vector4d rotation(s, v[0], v[1], v[2]);
         rotation.normalize();
 
         const Eigen::Vector3d translation =
-            eigensolver.eigenvectors().col(i).tail<3>().real();
+            eigensolver.eigenvectors().col(i).tail<3>().real().normalized();
 
         candidate_solutions.push_back({rotation, translation});
       }
     }
 
-    assert(candidate_solutions.size() == 4);
+    // assert(candidate_solutions.size() >= 4);
   } else {
     candidate_solutions.reserve(2);
 
     const Eigen::Vector4d zero_rot = ComposeIdentityQuaternion();
 
     Eigen::JacobiSVD<Eigen::Matrix3d> svd = M.jacobiSvd(Eigen::ComputeFullV);
-    const Eigen::Vector3d nullspace_M = svd.matrixV().col(2);
+    const Eigen::Vector3d nullspace_M = svd.matrixV().col(2).normalized();
 
     candidate_solutions.push_back({zero_rot, nullspace_M});
     candidate_solutions.push_back({zero_rot, -nullspace_M});
