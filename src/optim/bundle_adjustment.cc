@@ -40,6 +40,7 @@
 #include "base/camera_models.h"
 #include "base/cost_functions.h"
 #include "base/projection.h"
+#include "optim/twosphere_parameterization.h"
 #include "util/misc.h"
 #include "util/threading.h"
 #include "util/timer.h"
@@ -192,6 +193,20 @@ void BundleAdjustmentConfig::RemoveConstantTvec(const image_t image_id) {
 
 bool BundleAdjustmentConfig::HasConstantTvec(const image_t image_id) const {
   return constant_tvecs_.find(image_id) != constant_tvecs_.end();
+}
+
+void BundleAdjustmentConfig::SetConstantLengthTvec(const image_t image_id) {
+  CHECK(HasImage(image_id));
+  CHECK(!HasConstantPose(image_id));
+  constant_length_tvecs_.insert(image_id);
+}
+
+void BundleAdjustmentConfig::RemoveConstantLengthTvec(const image_t image_id) {
+  constant_length_tvecs_.erase(image_id);
+}
+
+bool BundleAdjustmentConfig::HasConstantLengthTvec(const image_t image_id) const {
+  return constant_length_tvecs_.find(image_id) != constant_length_tvecs_.end();
 }
 
 const std::unordered_set<image_t>& BundleAdjustmentConfig::Images() const {
@@ -424,7 +439,26 @@ void BundleAdjuster::AddImageToProblem(const image_t image_id,
             new ceres::SubsetParameterization(3, constant_tvec_idxs);
         problem_->SetParameterization(tvec_data, tvec_parameterization);
       }
+      if (config_.HasConstantLengthTvec(image_id)) {
+        TwosphereParameterization* tvec_parameterization =
+            new TwosphereParameterization;
+        problem_->SetParameterization(tvec_data, tvec_parameterization);
+      }
     }
+  }
+
+  if (image.HasGravityPrior()) {
+    const double gravity_loss_outer_scale = 1;
+
+    // scale input so that 3 degrees is at s=1
+    constexpr double gravity_loss_inner_scale = 1 - std::cos(3 * 3.1415926 / 180);
+
+    ceres::LossFunction* gravity_loss_function =
+        new ceres::ScaledLoss(new ceres::CauchyLoss(gravity_loss_inner_scale), gravity_loss_outer_scale,
+          ceres::TAKE_OWNERSHIP);
+
+    ceres::CostFunction* gravity_cost_function = GravityAlignmentCostFunction::Create(image.GravityPrior(), Eigen::Vector3d::UnitY());
+    problem_->AddResidualBlock(gravity_cost_function, gravity_loss_function, qvec_data);
   }
 }
 
