@@ -435,9 +435,16 @@ void BundleAdjuster::AddImageToProblem(const image_t image_id,
       if (config_.HasConstantTvec(image_id)) {
         const std::vector<int>& constant_tvec_idxs =
             config_.ConstantTvec(image_id);
-        ceres::SubsetParameterization* tvec_parameterization =
-            new ceres::SubsetParameterization(3, constant_tvec_idxs);
-        problem_->SetParameterization(tvec_data, tvec_parameterization);
+
+        if (constant_tvec_idxs.size() == 3) {
+          // Ceres complains if we try to fix all three coordinates using
+          // a SubsetParameterization.
+          problem_->SetParameterBlockConstant(tvec_data);
+        } else {
+          ceres::SubsetParameterization* tvec_parameterization =
+              new ceres::SubsetParameterization(3, constant_tvec_idxs);
+          problem_->SetParameterization(tvec_data, tvec_parameterization);
+        }
       }
       if (config_.HasConstantLengthTvec(image_id)) {
         TwosphereParameterization* tvec_parameterization =
@@ -448,10 +455,9 @@ void BundleAdjuster::AddImageToProblem(const image_t image_id,
   }
 
   if (image.HasGravityPrior()) {
-    const double gravity_loss_outer_scale = 1;
-
     // scale input so that 3 degrees is at s=1
     constexpr double gravity_loss_inner_scale = 1 - std::cos(3 * 3.1415926 / 180);
+    const double gravity_loss_outer_scale = 1;
 
     ceres::LossFunction* gravity_loss_function =
         new ceres::ScaledLoss(new ceres::CauchyLoss(gravity_loss_inner_scale), gravity_loss_outer_scale,
