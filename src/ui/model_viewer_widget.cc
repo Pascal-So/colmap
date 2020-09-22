@@ -172,6 +172,17 @@ void BuildImageModel(const Image& image, const Camera& camera,
                            frame_color(2), frame_color(3)),
         PointPainter::Data(tl(0), tl(1), tl(2), frame_color(0), frame_color(1),
                            frame_color(2), frame_color(3)));
+
+    if (image.HasGravityPrior()) {
+      const Eigen::Vector3f gravity = pc +
+          (image.RotationMatrix().transpose() * image.GravityPrior()).cast<float>() * camera_extent_world * image_size;
+
+      line_data->emplace_back(
+        PointPainter::Data(pc(0), pc(1), pc(2), frame_color(0), frame_color(1),
+                           frame_color(2), frame_color(3)),
+        PointPainter::Data(gravity(0), gravity(1), gravity(2), frame_color(0), frame_color(1),
+                           frame_color(2), frame_color(3)));
+    }
   }
 }
 
