@@ -72,14 +72,17 @@ Eigen::Matrix3d EulerAnglesToRotationMatrix(const double rx, const double ry,
 // @return               Unit Quaternion rotation coefficients (w, x, y, z).
 Eigen::Vector4d RotationMatrixToQuaternion(const Eigen::Matrix3d& rot_mat);
 
-// Convert Eigen::Quaternion4d to COLMAP Quaternion aka Eigen::Vector4d.
+// Convert Eigen::Quaterniond to COLMAP Quaternion aka Eigen::Vector4d.
 //
 // @param quat           Unit Quaternion.
 //
 // @return               Unit Quaternion rotation coefficients (w, x, y, z).
 Eigen::Vector4d EigenQuaternionToQuaternion(const Eigen::Quaterniond& quat);
 
-// Convert COLMAP Quaternion aka Eigen::Vector4d to Eigen::Quaternion4d.
+// Convert COLMAP Quaternion aka Eigen::Vector4d to Eigen::Quaterniond.
+// Note that Eigen::Quaternion::Quaternion has an overload accepting 4D
+// vector expressions but that would assume the Eigen internal order of
+// x, y, z, w.
 //
 // @param quat           Unit Quaternion rotation coefficients (w, x, y, z).
 //

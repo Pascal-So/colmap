@@ -613,14 +613,14 @@ IncrementalMapper::AdjustLocalBundle(
     // Fix 7 DOF to avoid scale/rotation/translation drift in bundle adjustment.
     if (local_bundle.size() == 1) {
       ba_config.SetConstantPose(local_bundle[0]);
-      ba_config.SetConstantTvec(image_id, {0});
+      ba_config.SetConstantLengthTvec(image_id);
     } else if (local_bundle.size() > 1) {
       const image_t image_id1 = local_bundle[local_bundle.size() - 1];
       const image_t image_id2 = local_bundle[local_bundle.size() - 2];
       ba_config.SetConstantPose(image_id1);
       if (!options.fix_existing_images ||
           !existing_image_ids_.count(image_id2)) {
-        ba_config.SetConstantTvec(image_id2, {0});
+        ba_config.SetConstantLengthTvec(image_id2);
       }
     }
 
@@ -695,8 +695,11 @@ bool IncrementalMapper::AdjustGlobalBundle(
     ba_config.AddImage(image_id);
   }
 
+  const bool has_fixed_existing_images =
+      options.fix_existing_images && !existing_image_ids_.empty();
+
   // Fix the existing images, if option specified.
-  if (options.fix_existing_images) {
+  if (has_fixed_existing_images) {
     for (const image_t image_id : reg_image_ids) {
       if (existing_image_ids_.count(image_id)) {
         ba_config.SetConstantPose(image_id);
@@ -704,11 +707,29 @@ bool IncrementalMapper::AdjustGlobalBundle(
     }
   }
 
-  // Fix 7-DOFs of the bundle adjustment problem.
-  ba_config.SetConstantPose(reg_image_ids[0]);
-  if (!options.fix_existing_images ||
-      !existing_image_ids_.count(reg_image_ids[1])) {
-    ba_config.SetConstantTvec(reg_image_ids[1], {0});
+  bool has_gravity_data = false;
+  for (const image_t image_id : reg_image_ids) {
+    if (reconstruction_->Image(image_id).HasGravityPrior()) {
+      has_gravity_data = true;
+      break;
+    }
+  }
+
+  if (!has_fixed_existing_images && has_gravity_data) {
+    // Fix 4 DOFs: translation of first image and translation
+    // length of second image. Global rotation around x and z
+    // is fixed by gravity constraint. We leave the global y
+    // rotation unconstrained.
+
+    ba_config.SetConstantTvec(reg_image_ids[0], {0, 1, 2});
+    ba_config.SetConstantLengthTvec(reg_image_ids[1]);
+  } else {
+    // Fix 7-DOFs of the bundle adjustment problem.
+    ba_config.SetConstantPose(reg_image_ids[0]);
+    if (!options.fix_existing_images ||
+        !existing_image_ids_.count(reg_image_ids[1])) {
+      ba_config.SetConstantLengthTvec(reg_image_ids[1]);
+    }
   }
 
   // Run bundle adjustment.
@@ -1174,6 +1195,7 @@ bool IncrementalMapper::EstimateInitialPoses(const Options& options,
                                                             image_id2);
 
   if (images[0].HasGravityPrior() && images[1].HasGravityPrior()) {
+    std::cout << "Initializing image pair " << image_id1 << ", " << image_id2 << " with gravity.\n";
     RANSACOptions ransac_options;
     ransac_options.min_num_trials = 30;
     ransac_options.max_error =

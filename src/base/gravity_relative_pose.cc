@@ -42,6 +42,7 @@ unsigned EstimateRelativePoseGravity(const std::array<Image, 2>& images,
                                      const FeatureMatches matches,
                                      const RANSACOptions ransac_options,
                                      std::array<Pose, 2>* poses) {
+  assert(poses != nullptr);
   const std::size_t nr_points = matches.size();
 
   const std::array<Eigen::Quaterniond, 2> rotations{

@@ -86,6 +86,7 @@ void EstimateAbsolutePoseKernel(const Camera& camera,
       scaled_camera.ImageToWorldThreshold(options.max_error);
 
   if (pose_prior_info.gravity) {
+    std::cout << "\n\n GRAVITY Absolute Pose \n\n";
     GravityAbsolutePoseRANSAC ransac(custom_options);
     ransac.estimator.SetGravityVector(*pose_prior_info.gravity);
     // This is safe, the static_assert at the top of this file makes sure that

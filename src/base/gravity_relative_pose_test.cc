@@ -95,8 +95,8 @@ BOOST_AUTO_TEST_CASE(TestEstimateRelativePoseGravity) {
   }
 
   RANSACOptions ransac_options;
-  ransac_options.min_num_trials = 1;
-  ransac_options.max_num_trials = 1;
+  ransac_options.min_num_trials = 10;
+  ransac_options.max_num_trials = 50;
   ransac_options.max_error = 1e-5;
 
   std::array<Pose, 2> poses_est;

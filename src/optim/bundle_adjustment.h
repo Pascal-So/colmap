@@ -141,6 +141,12 @@ class BundleAdjustmentConfig {
   void RemoveConstantTvec(const image_t image_id);
   bool HasConstantTvec(const image_t image_id) const;
 
+  // Fix the length of the translational part of the pose. Note that the
+  // corresponding images have to be added prior to calling these methods.
+  void SetConstantLengthTvec(const image_t image_id);
+  void RemoveConstantLengthTvec(const image_t image_id);
+  bool HasConstantLengthTvec(const image_t image_id) const;
+
   // Add / remove points from the configuration. Note that points can either
   // be variable or constant but not both at the same time.
   void AddVariablePoint(const point3D_t point3D_id);
@@ -164,6 +170,7 @@ class BundleAdjustmentConfig {
   std::unordered_set<point3D_t> constant_point3D_ids_;
   std::unordered_set<image_t> constant_poses_;
   std::unordered_map<image_t, std::vector<int>> constant_tvecs_;
+  std::unordered_set<image_t> constant_length_tvecs_;
 };
 
 // Bundle adjustment based on Ceres-Solver. Enables most flexible configurations

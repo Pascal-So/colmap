@@ -32,6 +32,8 @@
 #ifndef COLMAP_SRC_BASE_COST_FUNCTIONS_H_
 #define COLMAP_SRC_BASE_COST_FUNCTIONS_H_
 
+#include <cmath>
+
 #include <Eigen/Core>
 
 #include <ceres/ceres.h>
@@ -265,6 +267,33 @@ class RelativePoseCostFunction {
   const double y1_;
   const double x2_;
   const double y2_;
+};
+
+class GravityAlignmentCostFunction {
+ public:
+  explicit GravityAlignmentCostFunction(const Eigen::Vector3d& measured_gravity, const Eigen::Vector3d& world_down)
+      : measured_gravity_(measured_gravity), world_down_(world_down) {}
+
+  static ceres::CostFunction* Create(const Eigen::Vector3d& measured_gravity, const Eigen::Vector3d& world_down = Eigen::Vector3d::UnitY()) {
+    return (new ceres::AutoDiffCostFunction<GravityAlignmentCostFunction, 1, 4>(
+        new GravityAlignmentCostFunction(measured_gravity, world_down)));
+  }
+
+  template <typename T>
+  bool operator()(const T* const qvec, T* residuals) const {
+    using vec3_t = Eigen::Matrix<T, 3, 1>;
+    using quat_t = Eigen::Quaternion<T>;
+
+    const vec3_t rotated = quat_t(qvec[0], qvec[1], qvec[2], qvec[3]) * world_down_.cast<T>();
+
+    using std::acos;
+    residuals[0] = acos(rotated.dot(measured_gravity_.cast<T>()));
+    return true;
+  }
+
+ private:
+  const Eigen::Vector3d measured_gravity_;
+  const Eigen::Vector3d world_down_;
 };
 
 }  // namespace colmap
