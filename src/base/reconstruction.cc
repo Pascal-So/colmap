@@ -34,6 +34,7 @@
 #include <fstream>
 
 #include "base/database_cache.h"
+#include "base/image_reader.h"
 #include "base/pose.h"
 #include "base/projection.h"
 #include "base/similarity_transform.h"
@@ -1731,6 +1732,13 @@ void Reconstruction::ReadPoints3DBinary(const std::string& path) {
     point3D.Track().Compress();
 
     points3D_.emplace(point3D_id, point3D);
+  }
+}
+
+void Reconstruction::ReadImageGravityPriors(const std::string& images_base_path) {
+  for (auto& image : images_) {
+    const std::string path = EnsureTrailingSlash(images_base_path) + image.second.Name();
+    image.second.SetGravityPrior(ReadImageGravityPrior(path));
   }
 }
 

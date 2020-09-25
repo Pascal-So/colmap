@@ -85,7 +85,7 @@ ImageReader::ImageReader(const ImageReaderOptions& options, Database* database)
   }
 }
 
-Eigen::Vector3d ReadGravityPrior(const std::string& image_path) {
+Eigen::Vector3d ReadImageGravityPrior(const std::string& image_path) {
   // We assume that for every image for which the measured gravity direction is
   // available, there is a file located in the same directory with the same name
   // but the extension changed to .txt, e.g. "image_path/asdf/0001.jpg" has
@@ -253,7 +253,7 @@ ImageReader::Status ImageReader::Next(Camera* camera, Image* image,
       image->TvecPrior().setConstant(std::numeric_limits<double>::quiet_NaN());
     }
 
-    image->SetGravityPrior(ReadGravityPrior(image_path));
+    image->SetGravityPrior(ReadImageGravityPrior(image_path));
   }
 
   *camera = prev_camera_;

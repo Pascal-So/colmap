@@ -179,10 +179,12 @@ int RunAutomaticReconstructor(int argc, char** argv) {
 int RunBundleAdjuster(int argc, char** argv) {
   std::string input_path;
   std::string output_path;
+  std::string images_path = "no path";
 
   OptionManager options;
   options.AddRequiredOption("input_path", &input_path);
   options.AddRequiredOption("output_path", &output_path);
+  options.AddDefaultOption("images_path", &images_path, "Path to the images dir, needed to get the gravity info.");
   options.AddBundleAdjustmentOptions();
   options.Parse(argc, argv);
 
@@ -196,8 +198,16 @@ int RunBundleAdjuster(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
+  if (images_path != "no path" && !ExistsDir(images_path)) {
+    std::cerr << "ERROR: `images_path` is not a directory" << std::endl;
+    return EXIT_FAILURE;
+  }
+
   Reconstruction reconstruction;
   reconstruction.Read(input_path);
+  if (images_path != "no path") {
+    reconstruction.ReadImageGravityPriors(images_path);
+  }
 
   BundleAdjustmentController ba_controller(options, &reconstruction);
   ba_controller.Start();

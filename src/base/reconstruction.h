@@ -252,6 +252,10 @@ class Reconstruction {
   void Read(const std::string& path);
   void Write(const std::string& path) const;
 
+  // Attempt to read gravity information for every image in the reconstruction
+  // from text files that are stored next to the images themselves.
+  void ReadImageGravityPriors(const std::string& images_base_path);
+
   // Read data from binary/text file.
   void ReadText(const std::string& path);
   void ReadBinary(const std::string& path);
