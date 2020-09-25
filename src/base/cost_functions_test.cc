@@ -35,6 +35,7 @@
 #include "base/camera_models.h"
 #include "base/cost_functions.h"
 #include "base/pose.h"
+#include "util/random.h"
 
 using namespace colmap;
 
@@ -149,4 +150,18 @@ BOOST_AUTO_TEST_CASE(TestRelativePoseCostFunction) {
                                                    Eigen::Vector2d(1, 1));
   BOOST_CHECK(cost_function->Evaluate(parameters, residuals, nullptr));
   BOOST_CHECK_EQUAL(residuals[0], 0.5);
+}
+
+BOOST_AUTO_TEST_CASE(TestGravityAlignmentCostFunction) {
+  SetPRNGSeed(0);
+  const Eigen::Quaterniond quat = Eigen::Quaterniond::UnitRandom();
+  ceres::CostFunction* cost_function = GravityAlignmentCostFunction::Create(
+      quat * Eigen::Vector3d(0, 1, 0));
+
+  const Eigen::Vector4d qvec = EigenQuaternionToQuaternion(quat);
+  double residuals[1];
+  const double* parameters[1] = {qvec.data()};
+
+  BOOST_CHECK(cost_function->Evaluate(parameters, residuals, nullptr));
+  BOOST_CHECK_SMALL(residuals[0], 1e-9);
 }

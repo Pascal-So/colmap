@@ -32,8 +32,6 @@
 #ifndef COLMAP_SRC_BASE_COST_FUNCTIONS_H_
 #define COLMAP_SRC_BASE_COST_FUNCTIONS_H_
 
-#include <cmath>
-
 #include <Eigen/Core>
 
 #include <ceres/ceres.h>
@@ -286,8 +284,7 @@ class GravityAlignmentCostFunction {
 
     const vec3_t rotated = quat_t(qvec[0], qvec[1], qvec[2], qvec[3]) * world_down_.cast<T>();
 
-    using std::acos;
-    residuals[0] = acos(rotated.dot(measured_gravity_.cast<T>()));
+    residuals[0] = T(1.) - rotated.dot(measured_gravity_.cast<T>());
     return true;
   }
 
