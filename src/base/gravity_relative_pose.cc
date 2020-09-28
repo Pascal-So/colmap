@@ -31,39 +31,29 @@
 
 #include "base/gravity_relative_pose.h"
 
+#include <utility>
+
 #include "base/pose.h"
-#include "estimators/gravity_relative_pose.h"
-#include "optim/loransac.h"
 
 namespace colmap {
 
-unsigned EstimateRelativePoseGravity(const std::array<Image, 2>& images,
-                                     const std::array<Camera, 2>& cameras,
-                                     const FeatureMatches matches,
-                                     const RANSACOptions ransac_options,
-                                     std::array<Pose, 2>* poses) {
-  assert(poses != nullptr);
-  const std::size_t nr_points = matches.size();
+LORANSAC<GravityRelativePoseEstimator, GravityRelativePoseEstimator>::Report
+EstimateRelativePoseGravity(
+    std::array<std::vector<Eigen::Vector2d>, 2> normalized_keypoints,
+    const std::array<Eigen::Vector3d, 2>& gravity,
+    const RANSACOptions ransac_options, std::array<Pose, 2>* poses) {
+  CHECK_NOTNULL(poses);
 
-  const std::array<Eigen::Quaterniond, 2> rotations{
-      AxisAlignmentFromImage(images[0]), AxisAlignmentFromImage(images[1])};
+  std::array<Eigen::Quaterniond, 2> rotations;
 
-  std::array<std::vector<Eigen::Vector2d>, 2> normalized_rotated_keypoints;
-  normalized_rotated_keypoints[0].reserve(nr_points);
-  normalized_rotated_keypoints[1].reserve(nr_points);
+  for (int i : {0, 1}) {
+    rotations[i] = Eigen::Quaterniond::FromTwoVectors(gravity[i],
+                                                      Eigen::Vector3d(0, 1, 0));
 
-  for (std::size_t match_id = 0; match_id < nr_points; ++match_id) {
-    const std::array<point2D_t, 2> idx{matches[match_id].point2D_idx1,
-                                       matches[match_id].point2D_idx2};
-
-    for (int i : {0, 1}) {
-      const Eigen::Vector2d normalized =
-          cameras[i].ImageToWorld(images[i].Points2D()[idx[i]].XY());
-
-      const Eigen::Vector2d normalized_rotated =
-          (rotations[i] * normalized.homogeneous()).hnormalized();
-
-      normalized_rotated_keypoints[i].push_back(normalized_rotated);
+    for (auto& v : normalized_keypoints[i]) {
+      // Todo: figure out what to do if the point lies on the xy plane after the
+      // rotation
+      v = (rotations[i] * v.homogeneous()).hnormalized();
     }
   }
 
@@ -71,19 +61,20 @@ unsigned EstimateRelativePoseGravity(const std::array<Image, 2>& images,
       ransac_options);
   ransac.estimator.SetRotationAxis(Eigen::Vector3d::UnitY());
 
-  const auto ransac_report = ransac.Estimate(normalized_rotated_keypoints[0],
-                                             normalized_rotated_keypoints[1]);
+  const auto ransac_report =
+      ransac.Estimate(normalized_keypoints[0], normalized_keypoints[1]);
   if (!ransac_report.success) {
-    return 0;
+    return ransac_report;
   }
   const std::size_t nr_inliers = ransac_report.support.num_inliers;
 
+  const std::size_t nr_points = normalized_keypoints[0].size();
   std::array<std::vector<Eigen::Vector2d>, 2> inlier_points;
   for (auto i : {0, 1}) {
     inlier_points[i].reserve(nr_inliers);
     for (std::size_t point_id = 0; point_id < nr_points; ++point_id) {
       if (ransac_report.inlier_mask[point_id]) {
-        inlier_points[i].push_back(normalized_rotated_keypoints[i][point_id]);
+        inlier_points[i].push_back(normalized_keypoints[i][point_id]);
       }
     }
   }
@@ -113,7 +104,41 @@ unsigned EstimateRelativePoseGravity(const std::array<Image, 2>& images,
       QuaternionToEigenQuaternion(ransac_report.model.qvec));
   (*poses)[1].tvec = rotations[1].conjugate() * t;
 
-  return nr_inliers;
+  return ransac_report;
+}
+
+LORANSAC<GravityRelativePoseEstimator, GravityRelativePoseEstimator>::Report
+EstimateRelativePoseGravity(const std::array<Image, 2>& images,
+                            const std::array<Camera, 2>& cameras,
+                            const FeatureMatches matches,
+                            const RANSACOptions ransac_options,
+                            std::array<Pose, 2>* poses) {
+  CHECK_NOTNULL(poses);
+  CHECK(images[0].HasGravityPrior());
+  CHECK(images[1].HasGravityPrior());
+
+  const std::size_t nr_points = matches.size();
+
+  std::array<Eigen::Vector3d, 2> gravity = {images[0].GravityPrior(),
+                                            images[1].GravityPrior()};
+
+  std::array<std::vector<Eigen::Vector2d>, 2> normalized_keypoints;
+  normalized_keypoints[0].reserve(nr_points);
+  normalized_keypoints[1].reserve(nr_points);
+
+  for (std::size_t match_id = 0; match_id < nr_points; ++match_id) {
+    const std::array<point2D_t, 2> idx{matches[match_id].point2D_idx1,
+                                       matches[match_id].point2D_idx2};
+
+    for (int i : {0, 1}) {
+      const Eigen::Vector2d normalized =
+          cameras[i].ImageToWorld(images[i].Points2D()[idx[i]].XY());
+      normalized_keypoints[i].push_back(normalized);
+    }
+  }
+
+  return EstimateRelativePoseGravity(std::move(normalized_keypoints), gravity,
+                                     ransac_options, poses);
 }
 
 }  // namespace colmap

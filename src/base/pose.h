@@ -35,6 +35,7 @@
 #include <vector>
 
 #include <Eigen/Core>
+#include <boost/optional.hpp>
 
 #include "util/alignment.h"
 #include "util/types.h"
@@ -238,6 +239,10 @@ struct Pose {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Eigen::Vector4d qvec = ComposeIdentityQuaternion();
   Eigen::Vector3d tvec = Eigen::Vector3d::Zero();
+};
+
+struct PosePriorInfo {
+  boost::optional<Eigen::Vector3d> gravity = boost::none;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

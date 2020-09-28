@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "base/database.h"
+#include "estimators/two_view_geometry.h"
 #include "feature/sift.h"
 #include "util/alignment.h"
 #include "util/cache.h"

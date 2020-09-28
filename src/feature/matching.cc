@@ -580,23 +580,32 @@ void TwoViewGeometryVerifier::Run() {
         continue;
       }
 
-      const auto& camera1 =
-          cache_->GetCamera(cache_->GetImage(data.image_id1).CameraId());
-      const auto& camera2 =
-          cache_->GetCamera(cache_->GetImage(data.image_id2).CameraId());
+      const auto& image1 = cache_->GetImage(data.image_id1);
+      const auto& image2 = cache_->GetImage(data.image_id2);
+      const auto& camera1 = cache_->GetCamera(image1.CameraId());
+      const auto& camera2 = cache_->GetCamera(image2.CameraId());
       const auto keypoints1 = cache_->GetKeypoints(data.image_id1);
       const auto keypoints2 = cache_->GetKeypoints(data.image_id2);
       const auto points1 = FeatureKeypointsToPointsVector(keypoints1);
       const auto points2 = FeatureKeypointsToPointsVector(keypoints2);
 
+      PosePriorInfo pose_prior_info1;
+      if (image1.HasGravityPrior()) {
+        pose_prior_info1.gravity = image1.GravityPrior();
+      }
+      PosePriorInfo pose_prior_info2;
+      if (image2.HasGravityPrior()) {
+        pose_prior_info2.gravity = image2.GravityPrior();
+      }
+
       if (options_.multiple_models) {
-        data.two_view_geometry.EstimateMultiple(camera1, points1, camera2,
-                                                points2, data.matches,
-                                                two_view_geometry_options_);
+        data.two_view_geometry.EstimateMultiple(
+            camera1, points1, pose_prior_info1, camera2, points2,
+            pose_prior_info2, data.matches, two_view_geometry_options_);
       } else {
-        data.two_view_geometry.Estimate(camera1, points1, camera2, points2,
-                                        data.matches,
-                                        two_view_geometry_options_);
+        data.two_view_geometry.Estimate(
+            camera1, points1, pose_prior_info1, camera2, points2,
+            pose_prior_info2, data.matches, two_view_geometry_options_);
       }
 
       CHECK(output_queue_->Push(data));
@@ -1642,9 +1651,9 @@ void FeaturePairsFeatureMatcher::Run() {
           match_options_.min_inlier_ratio;
 
       two_view_geometry.Estimate(
-          camera1, FeatureKeypointsToPointsVector(keypoints1), camera2,
-          FeatureKeypointsToPointsVector(keypoints2), matches,
-          two_view_geometry_options);
+          camera1, FeatureKeypointsToPointsVector(keypoints1), PosePriorInfo(),
+          camera2, FeatureKeypointsToPointsVector(keypoints2), PosePriorInfo(),
+          matches, two_view_geometry_options);
 
       database_.WriteTwoViewGeometry(image1.ImageId(), image2.ImageId(),
                                      two_view_geometry);
