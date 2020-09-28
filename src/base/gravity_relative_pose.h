@@ -40,8 +40,9 @@
 #include "base/camera.h"
 #include "base/image.h"
 #include "base/pose.h"
+#include "estimators/gravity_relative_pose.h"
 #include "feature/types.h"
-#include "optim/ransac.h"
+#include "optim/loransac.h"
 
 namespace colmap {
 
@@ -51,11 +52,18 @@ inline Eigen::Quaterniond AxisAlignmentFromImage(const Image& image) {
                                             Eigen::Vector3d(0, 1, 0));
 }
 
-unsigned EstimateRelativePoseGravity(const std::array<Image, 2>& images,
-                                     const std::array<Camera, 2>& cameras,
-                                     const FeatureMatches matches,
-                                     const RANSACOptions ransac_options,
-                                     std::array<Pose, 2>* poses);
+LORANSAC<GravityRelativePoseEstimator, GravityRelativePoseEstimator>::Report
+EstimateRelativePoseGravity(
+    std::array<std::vector<Eigen::Vector2d>, 2> normalized_keypoints,
+    const std::array<Eigen::Vector3d, 2>& gravity,
+    const RANSACOptions ransac_options, std::array<Pose, 2>* poses);
+
+LORANSAC<GravityRelativePoseEstimator, GravityRelativePoseEstimator>::Report
+EstimateRelativePoseGravity(const std::array<Image, 2>& images,
+                            const std::array<Camera, 2>& cameras,
+                            const FeatureMatches matches,
+                            const RANSACOptions ransac_options,
+                            std::array<Pose, 2>* poses);
 
 }  // namespace colmap
 

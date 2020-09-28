@@ -101,8 +101,9 @@ BOOST_AUTO_TEST_CASE(TestEstimateRelativePoseGravity) {
 
   std::array<Pose, 2> poses_est;
 
-  unsigned nr_inliers = EstimateRelativePoseGravity(images, cameras, matches,
-                                                    ransac_options, &poses_est);
+  const auto report = EstimateRelativePoseGravity(images, cameras, matches,
+                                                  ransac_options, &poses_est);
+  const unsigned nr_inliers = report.support.num_inliers;
 
   BOOST_CHECK_EQUAL(poses_est[0].tvec, Vector3d::Zero());
   BOOST_CHECK_CLOSE(poses_est[0].qvec.norm(), 1., 1e-9);

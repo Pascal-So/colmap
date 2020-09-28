@@ -33,6 +33,7 @@
 #define COLMAP_SRC_ESTIMATORS_TWO_VIEW_GEOMETRY_H_
 
 #include "base/camera.h"
+#include "base/pose.h"
 #include "feature/types.h"
 #include "optim/ransac.h"
 #include "util/alignment.h"
@@ -144,9 +145,12 @@ struct TwoViewGeometry {
   // @param options         Two-view geometry estimation options.
   void Estimate(const Camera& camera1,
                 const std::vector<Eigen::Vector2d>& points1,
+                const PosePriorInfo& pose_prior_info1,
                 const Camera& camera2,
                 const std::vector<Eigen::Vector2d>& points2,
-                const FeatureMatches& matches, const Options& options);
+                const PosePriorInfo& pose_prior_info2,
+                const FeatureMatches& matches,
+                const Options& options);
 
   // Recursively estimate multiple configurations by removing the previous set
   // of inliers from the matches until not enough inliers are found. Inlier
@@ -166,8 +170,10 @@ struct TwoViewGeometry {
   // @param options         Two-view geometry estimation options.
   void EstimateMultiple(const Camera& camera1,
                         const std::vector<Eigen::Vector2d>& points1,
+                        const PosePriorInfo& pose_prior_info1,
                         const Camera& camera2,
                         const std::vector<Eigen::Vector2d>& points2,
+                        const PosePriorInfo& pose_prior_info2,
                         const FeatureMatches& matches, const Options& options);
 
   // Estimate two-view geometry and its relative pose from a calibrated or an
@@ -194,8 +200,10 @@ struct TwoViewGeometry {
   // @param options         Two-view geometry estimation options.
   void EstimateCalibrated(const Camera& camera1,
                           const std::vector<Eigen::Vector2d>& points1,
+                          const PosePriorInfo& pose_prior_info1,
                           const Camera& camera2,
                           const std::vector<Eigen::Vector2d>& points2,
+                          const PosePriorInfo& pose_prior_info2,
                           const FeatureMatches& matches,
                           const Options& options);
 
@@ -209,8 +217,10 @@ struct TwoViewGeometry {
   // @param options         Two-view geometry estimation options.
   void EstimateUncalibrated(const Camera& camera1,
                             const std::vector<Eigen::Vector2d>& points1,
+                            const PosePriorInfo& pose_prior_info1,
                             const Camera& camera2,
                             const std::vector<Eigen::Vector2d>& points2,
+                            const PosePriorInfo& pose_prior_info2,
                             const FeatureMatches& matches,
                             const Options& options);
 

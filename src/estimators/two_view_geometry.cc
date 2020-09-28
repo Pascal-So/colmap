@@ -35,6 +35,7 @@
 
 #include "base/camera.h"
 #include "base/essential_matrix.h"
+#include "base/gravity_relative_pose.h"
 #include "base/homography_matrix.h"
 #include "base/pose.h"
 #include "base/projection.h"
@@ -112,27 +113,34 @@ void TwoViewGeometry::Invert() {
 
 void TwoViewGeometry::Estimate(const Camera& camera1,
                                const std::vector<Eigen::Vector2d>& points1,
+                               const PosePriorInfo& pose_prior_info1,
                                const Camera& camera2,
                                const std::vector<Eigen::Vector2d>& points2,
+                               const PosePriorInfo& pose_prior_info2,
                                const FeatureMatches& matches,
                                const Options& options) {
   if (camera1.HasPriorFocalLength() && camera2.HasPriorFocalLength()) {
-    EstimateCalibrated(camera1, points1, camera2, points2, matches, options);
+    EstimateCalibrated(camera1, points1, pose_prior_info1, camera2, points2,
+                       pose_prior_info2, matches, options);
   } else {
-    EstimateUncalibrated(camera1, points1, camera2, points2, matches, options);
+    EstimateUncalibrated(camera1, points1, pose_prior_info1, camera2, points2,
+                         pose_prior_info2, matches, options);
   }
 }
 
 void TwoViewGeometry::EstimateMultiple(
     const Camera& camera1, const std::vector<Eigen::Vector2d>& points1,
-    const Camera& camera2, const std::vector<Eigen::Vector2d>& points2,
-    const FeatureMatches& matches, const Options& options) {
+    const PosePriorInfo& pose_prior_info1, const Camera& camera2,
+    const std::vector<Eigen::Vector2d>& points2,
+    const PosePriorInfo& pose_prior_info2, const FeatureMatches& matches,
+    const Options& options) {
   FeatureMatches remaining_matches = matches;
   std::vector<TwoViewGeometry> two_view_geometries;
   while (true) {
     TwoViewGeometry two_view_geometry;
-    two_view_geometry.Estimate(camera1, points1, camera2, points2,
-                               remaining_matches, options);
+    two_view_geometry.Estimate(camera1, points1, pose_prior_info1, camera2,
+                               points2, pose_prior_info2, remaining_matches,
+                               options);
     if (two_view_geometry.config == ConfigurationType::DEGENERATE) {
       break;
     }
@@ -229,8 +237,10 @@ bool TwoViewGeometry::EstimateRelativePose(
 
 void TwoViewGeometry::EstimateCalibrated(
     const Camera& camera1, const std::vector<Eigen::Vector2d>& points1,
-    const Camera& camera2, const std::vector<Eigen::Vector2d>& points2,
-    const FeatureMatches& matches, const Options& options) {
+    const PosePriorInfo& pose_prior_info1, const Camera& camera2,
+    const std::vector<Eigen::Vector2d>& points2,
+    const PosePriorInfo& pose_prior_info2, const FeatureMatches& matches,
+    const Options& options) {
   options.Check();
 
   if (matches.size() < options.min_num_inliers) {
@@ -253,6 +263,16 @@ void TwoViewGeometry::EstimateCalibrated(
   }
 
   // Estimate epipolar models.
+
+  unsigned gravity_num_inliers = 0;
+  if (pose_prior_info1.gravity && pose_prior_info2.gravity) {
+    const std::array<Eigen::Vector3d, 2> gravity = {*pose_prior_info1.gravity,
+                                                    *pose_prior_info2.gravity};
+    std::array<Pose, 2> poses;
+    const auto report = EstimateRelativePoseGravity(
+        {matched_points1_normalized, matched_points2_normalized}, gravity,
+        options.ransac_options, &poses);
+  }
 
   auto E_ransac_options = options.ransac_options;
   E_ransac_options.max_error =
@@ -364,8 +384,10 @@ void TwoViewGeometry::EstimateCalibrated(
 
 void TwoViewGeometry::EstimateUncalibrated(
     const Camera& camera1, const std::vector<Eigen::Vector2d>& points1,
-    const Camera& camera2, const std::vector<Eigen::Vector2d>& points2,
-    const FeatureMatches& matches, const Options& options) {
+    const PosePriorInfo& pose_prior_info1, const Camera& camera2,
+    const std::vector<Eigen::Vector2d>& points2,
+    const PosePriorInfo& pose_prior_info2, const FeatureMatches& matches,
+    const Options& options) {
   options.Check();
 
   if (matches.size() < options.min_num_inliers) {

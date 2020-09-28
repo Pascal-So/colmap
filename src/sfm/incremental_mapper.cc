@@ -1203,9 +1203,9 @@ bool IncrementalMapper::EstimateInitialPoses(const Options& options,
                  cameras[1].ImageToWorldThreshold(options.init_max_error));
 
     std::array<Pose, 2> poses;
-    const int num_inliers = EstimateRelativePoseGravity(
-        images, cameras, matches, ransac_options, &poses);
-    if (num_inliers > options.init_min_num_inliers) {
+    const auto report = EstimateRelativePoseGravity(images, cameras, matches,
+                                                    ransac_options, &poses);
+    if (report.support.num_inliers > options.init_min_num_inliers) {
       prev_init_image_pair_id_ = image_pair_id;
       prev_init_poses_ = poses;
       return true;
@@ -1224,9 +1224,9 @@ bool IncrementalMapper::EstimateInitialPoses(const Options& options,
     TwoViewGeometry::Options two_view_geometry_options;
     two_view_geometry_options.ransac_options.min_num_trials = 30;
     two_view_geometry_options.ransac_options.max_error = options.init_max_error;
-    two_view_geometry.EstimateCalibrated(cameras[0], points[0], cameras[1],
-                                         points[1], matches,
-                                         two_view_geometry_options);
+    two_view_geometry.EstimateCalibrated(cameras[0], points[0], PosePriorInfo(),
+                                         cameras[1], points[1], PosePriorInfo(),
+                                         matches, two_view_geometry_options);
 
     if (!two_view_geometry.EstimateRelativePose(cameras[0], points[0],
                                                 cameras[1], points[1])) {

@@ -36,12 +36,11 @@
 
 #include <Eigen/Core>
 
-#include <boost/optional.hpp>
-
 #include <ceres/ceres.h>
 
 #include "base/camera.h"
 #include "base/camera_models.h"
+#include "base/pose.h"
 #include "optim/loransac.h"
 #include "util/alignment.h"
 #include "util/logging.h"
@@ -78,10 +77,6 @@ struct AbsolutePoseEstimationOptions {
     CHECK_LT(min_focal_length_ratio, max_focal_length_ratio);
     ransac_options.Check();
   }
-};
-
-struct PosePriorInfo {
-  boost::optional<Eigen::Vector3d> gravity = boost::none;
 };
 
 struct AbsolutePoseRefinementOptions {
