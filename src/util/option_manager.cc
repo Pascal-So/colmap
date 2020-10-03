@@ -80,7 +80,7 @@ OptionManager::OptionManager(bool add_project_options) {
 
   AddRandomOptions();
   AddLogOptions();
-  
+
   if (add_project_options) {
     desc_->add_options()("project_path", config::value<std::string>());
   }
@@ -318,6 +318,10 @@ void OptionManager::AddMatchingOptions() {
                               &sift_matching->multiple_models);
   AddAndRegisterDefaultOption("SiftMatching.guided_matching",
                               &sift_matching->guided_matching);
+  AddAndRegisterDefaultOption("SiftMatching.min_E_F_inlier_ratio",
+                              &sift_matching->min_E_F_inlier_ratio);
+  AddAndRegisterDefaultOption("SiftMatching.max_H_inlier_ratio",
+                              &sift_matching->max_H_inlier_ratio);
 }
 
 void OptionManager::AddExhaustiveMatchingOptions() {

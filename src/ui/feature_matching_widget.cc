@@ -132,6 +132,11 @@ void FeatureMatchingTab::CreateGeneralOptions() {
                                  "multiple_models");
   options_widget_->AddOptionBool(&options_->sift_matching->guided_matching,
                                  "guided_matching");
+  options_widget_->AddOptionDouble(
+      &options_->sift_matching->min_E_F_inlier_ratio, "min_E_F_inlier_ratio", 0,
+      2, 0.001, 3);
+  options_widget_->AddOptionDouble(&options_->sift_matching->max_H_inlier_ratio,
+                                   "max_H_inlier_ratio", 0, 2, 0.001, 3);
 
   options_widget_->AddSpacer();
 
