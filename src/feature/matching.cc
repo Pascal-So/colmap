@@ -611,6 +611,9 @@ TwoViewGeometryVerifier::TwoViewGeometryVerifier(
       static_cast<size_t>(options_.max_num_trials);
   two_view_geometry_options_.ransac_options.min_inlier_ratio =
       options_.min_inlier_ratio;
+  two_view_geometry_options_.min_E_F_inlier_ratio =
+      options_.min_E_F_inlier_ratio;
+  two_view_geometry_options_.max_H_inlier_ratio = options_.max_H_inlier_ratio;
 }
 
 void TwoViewGeometryVerifier::Run() {
@@ -1698,9 +1701,18 @@ void FeaturePairsFeatureMatcher::Run() {
       two_view_geometry_options.ransac_options.min_inlier_ratio =
           match_options_.min_inlier_ratio;
 
+      PosePriorInfo pose_prior_info1;
+      if (image1.HasGravityPrior()) {
+        pose_prior_info1.gravity = image1.GravityPrior();
+      }
+      PosePriorInfo pose_prior_info2;
+      if (image2.HasGravityPrior()) {
+        pose_prior_info2.gravity = image2.GravityPrior();
+      }
+
       two_view_geometry.Estimate(
-          camera1, FeatureKeypointsToPointsVector(keypoints1), PosePriorInfo(),
-          camera2, FeatureKeypointsToPointsVector(keypoints2), PosePriorInfo(),
+          camera1, FeatureKeypointsToPointsVector(keypoints1), pose_prior_info1,
+          camera2, FeatureKeypointsToPointsVector(keypoints2), pose_prior_info2,
           matches, two_view_geometry_options);
 
       database_.WriteTwoViewGeometry(image1.ImageId(), image2.ImageId(),

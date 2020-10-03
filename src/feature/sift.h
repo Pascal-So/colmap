@@ -161,6 +161,10 @@ struct SiftMatchingOptions {
   // Whether to perform guided matching, if geometric verification succeeds.
   bool guided_matching = false;
 
+  // See TwoViewGeometry::Options for details about the following 2 options.
+  double min_E_F_inlier_ratio = 0.95;
+  double max_H_inlier_ratio = 0.8;
+
   bool Check() const;
 };
 

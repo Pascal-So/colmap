@@ -264,27 +264,50 @@ void TwoViewGeometry::EstimateCalibrated(
 
   // Estimate epipolar models.
 
-  unsigned gravity_num_inliers = 0;
-  if (pose_prior_info1.gravity && pose_prior_info2.gravity) {
-    const std::array<Eigen::Vector3d, 2> gravity = {*pose_prior_info1.gravity,
-                                                    *pose_prior_info2.gravity};
-    std::array<Pose, 2> poses;
-    const auto report = EstimateRelativePoseGravity(
-        {matched_points1_normalized, matched_points2_normalized}, gravity,
-        options.ransac_options, &poses);
+  LORANSAC<EssentialMatrixFivePointEstimator,
+           EssentialMatrixFivePointEstimator>::Report E_report;
+  {
+    auto E_ransac_options = options.ransac_options;
+    E_ransac_options.max_error = std::max(
+        camera1.ImageToWorldThreshold(options.ransac_options.max_error),
+        camera2.ImageToWorldThreshold(options.ransac_options.max_error));
+    if (pose_prior_info1.gravity && pose_prior_info2.gravity) {
+      std::cout << "estimate tvg with gravity\n";
+      const std::array<Eigen::Vector3d, 2> gravity = {
+          *pose_prior_info1.gravity, *pose_prior_info2.gravity};
+      std::array<Pose, 2> poses;
+      const auto report = EstimateRelativePoseGravity(
+          {matched_points1_normalized, matched_points2_normalized}, gravity,
+          E_ransac_options, &poses);
+
+      Pose relative_pose;
+      ComputeRelativePose(poses[0].qvec, poses[0].tvec, poses[1].qvec,
+                          poses[1].tvec, &relative_pose.qvec,
+                          &relative_pose.tvec);
+
+      // Hack: ideally we'd rewrite the whole decision structure below to
+      // use a data structure whose type does not depend on the estimator
+      // used, but this works..
+      E_report.model = EssentialMatrixFromPose(
+          QuaternionToRotationMatrix(relative_pose.qvec), relative_pose.tvec);
+      E_report.support = report.support;
+      E_report.success = report.success;
+      E_report.num_trials = report.num_trials;
+      E_report.inlier_mask = report.inlier_mask;
+    } else {
+      std::cout << "estimate tvg without gravity\n";
+
+      LORANSAC<EssentialMatrixFivePointEstimator,
+               EssentialMatrixFivePointEstimator>
+          E_ransac(E_ransac_options);
+      E_report = E_ransac.Estimate(matched_points1_normalized,
+                                   matched_points2_normalized);
+    }
+
+    std::cout << "E inliers = " << E_report.support.num_inliers << " / "
+              << matched_points1_normalized.size() << "\n";
+    E = E_report.model;
   }
-
-  auto E_ransac_options = options.ransac_options;
-  E_ransac_options.max_error =
-      (camera1.ImageToWorldThreshold(options.ransac_options.max_error) +
-       camera2.ImageToWorldThreshold(options.ransac_options.max_error)) /
-      2;
-
-  LORANSAC<EssentialMatrixFivePointEstimator, EssentialMatrixFivePointEstimator>
-      E_ransac(E_ransac_options);
-  const auto E_report =
-      E_ransac.Estimate(matched_points1_normalized, matched_points2_normalized);
-  E = E_report.model;
 
   LORANSAC<FundamentalMatrixSevenPointEstimator,
            FundamentalMatrixEightPointEstimator>
@@ -322,9 +345,13 @@ void TwoViewGeometry::EstimateCalibrated(
   const std::vector<char>* best_inlier_mask = nullptr;
   size_t num_inliers = 0;
 
+  std::cout << "min e f inlier ratio: " << options.min_E_F_inlier_ratio
+            << "  ratio: " << E_F_inlier_ratio << '\n';
   if (E_report.success && E_F_inlier_ratio > options.min_E_F_inlier_ratio &&
       E_report.support.num_inliers >= options.min_num_inliers) {
     // Calibrated configuration.
+
+    std::cout << "calibrated\n";
 
     // Always use the model with maximum matches.
     if (E_report.support.num_inliers >= F_report.support.num_inliers) {
@@ -347,6 +374,7 @@ void TwoViewGeometry::EstimateCalibrated(
   } else if (F_report.success &&
              F_report.support.num_inliers >= options.min_num_inliers) {
     // Uncalibrated configuration.
+    std::cout << "uncalibrated\n";
 
     num_inliers = F_report.support.num_inliers;
     best_inlier_mask = &F_report.inlier_mask;
@@ -389,6 +417,8 @@ void TwoViewGeometry::EstimateUncalibrated(
     const PosePriorInfo& pose_prior_info2, const FeatureMatches& matches,
     const Options& options) {
   options.Check();
+
+  std::cout << "EstimateUncalibrated\n";
 
   if (matches.size() < options.min_num_inliers) {
     config = ConfigurationType::DEGENERATE;
