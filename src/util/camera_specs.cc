@@ -298,6 +298,7 @@ camera_specs_t InitializeCameraSpecs() {
     make_specs.emplace_back("eos5dsr", 36.0000f);
     make_specs.emplace_back("eos5ds", 36.0000f);
     make_specs.emplace_back("eos5d", 35.8000f);
+    make_specs.emplace_back("eos600d", 22.3000f);
     make_specs.emplace_back("eos60da", 22.3000f);
     make_specs.emplace_back("eos60d", 22.3000f);
     make_specs.emplace_back("eos6d", 35.8000f);
@@ -1219,6 +1220,13 @@ camera_specs_t InitializeCameraSpecs() {
     make_specs.emplace_back("x500", 6.1600f);
     make_specs.emplace_back("x550", 6.1600f);
     make_specs.emplace_back("x600", 6.1600f);
+  }
+
+
+  {
+    auto& make_specs = specs["google"];
+    make_specs.reserve(1);
+    make_specs.emplace_back("pixel2", 5.6400f);
   }
 
   {

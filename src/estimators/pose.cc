@@ -101,6 +101,8 @@ void EstimateAbsolutePoseKernel(const Camera& camera,
 
 }  // namespace
 
+int total_nr_ransac_iterations = 0;
+
 bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
                           const std::vector<Eigen::Vector2d>& points2D,
                           const std::vector<Eigen::Vector3d>& points3D,
@@ -152,6 +154,8 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
   for (size_t i = 0; i < focal_length_factors.size(); ++i) {
     futures[i].get();
     const auto report = reports[i];
+    total_nr_ransac_iterations += report.num_trials;
+    std::cout << "total nr. ransac iterations: " << total_nr_ransac_iterations << '\n';
     if (report.success && report.support.num_inliers > *num_inliers) {
       *num_inliers = report.support.num_inliers;
       proj_matrix = report.model;

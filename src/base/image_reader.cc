@@ -105,6 +105,7 @@ Eigen::Vector3d ReadImageGravityPrior(const std::string& image_path) {
     gravity_prior.setConstant(std::numeric_limits<double>::quiet_NaN());
   }
 
+  gravity_prior.normalize();
   return gravity_prior;
 }
 
