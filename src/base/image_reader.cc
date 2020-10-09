@@ -262,6 +262,8 @@ ImageReader::Status ImageReader::Next(Camera* camera, Image* image,
   image_folders_.insert(image_folder);
   prev_image_folder_ = image_folder;
 
+  std::cout << "image reader success\n";
+
   return Status::SUCCESS;
 }
 

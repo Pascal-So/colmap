@@ -401,11 +401,14 @@ bool SiftMatchingOptions::Check() const {
 }
 
 bool ExtractSiftFeaturesCPU(const SiftExtractionOptions& options,
-                            const Bitmap& bitmap, FeatureKeypoints* keypoints,
+                            const Bitmap& bitmap, const double angle,
+                            FeatureKeypoints* keypoints,
                             FeatureDescriptors* descriptors) {
   CHECK(options.Check());
   CHECK(bitmap.IsGrey());
   CHECK_NOTNULL(keypoints);
+
+  std::cout << "using ExtractSiftFeaturesCPU\n";
 
   CHECK(!options.estimate_affine_shape);
   CHECK(!options.domain_size_pooling);
@@ -490,7 +493,8 @@ bool ExtractSiftFeaturesCPU(const SiftExtractionOptions& options,
       int num_orientations;
       if (options.upright) {
         num_orientations = 1;
-        angles[0] = 0.0;
+        // VLFeat uses clockwise angles
+        angles[0] = -angle;
       } else {
         num_orientations = vl_sift_calc_keypoint_orientations(
             sift.get(), angles, &vl_keypoints[i]);

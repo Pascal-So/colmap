@@ -34,6 +34,7 @@
 
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include <Eigen/Core>
 
@@ -147,6 +148,9 @@ class Image {
   inline double& GravityPrior(const size_t idx);
   inline bool HasGravityPrior() const;
   inline void SetGravityPrior(const Eigen::Vector3d& gravity);
+  // The angle by which the image would have to be rotated counter
+  // clockwise such that the horizon appears level.
+  inline double Angle() const;
 
   // Access the coordinates of image points.
   inline const class Point2D& Point2D(const point2D_t point2D_idx) const;
@@ -368,6 +372,11 @@ inline bool Image::HasGravityPrior() const { return !IsNaN(gravity_prior_.sum())
 
 void Image::SetGravityPrior(const Eigen::Vector3d& gravity) {
   gravity_prior_ = gravity;
+}
+
+inline double Image::Angle() const {
+  assert(HasGravityPrior());
+  return std::atan2(gravity_prior_(0), gravity_prior_(1));
 }
 
 const class Point2D& Image::Point2D(const point2D_t point2D_idx) const {
