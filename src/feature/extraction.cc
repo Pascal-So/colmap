@@ -384,20 +384,30 @@ void SiftFeatureExtractorThread::Run() {
     if (input_job.IsValid()) {
       auto image_data = input_job.Data();
 
+      std::cout << "SiftFeatureExtractorThread::Run processing job\n";
+
+
       if (image_data.status == ImageReader::Status::SUCCESS) {
         bool success = false;
         if (sift_options_.estimate_affine_shape ||
             sift_options_.domain_size_pooling) {
+          std::cout << "affine or pooling\n";
           success = ExtractCovariantSiftFeaturesCPU(
               sift_options_, image_data.bitmap, &image_data.keypoints,
               &image_data.descriptors);
         } else if (sift_options_.use_gpu) {
+          std::cout << "gpu\n";
           success = ExtractSiftFeaturesGPU(
               sift_options_, image_data.bitmap, sift_gpu.get(),
               &image_data.keypoints, &image_data.descriptors);
         } else {
+          std::cout << "other\n";
+          double angle = 0;
+          if (sift_options_.upright && image_data.image.HasGravityPrior()) {
+            angle = image_data.image.Angle();
+          }
           success = ExtractSiftFeaturesCPU(sift_options_, image_data.bitmap,
-                                           &image_data.keypoints,
+                                           angle, &image_data.keypoints,
                                            &image_data.descriptors);
         }
         if (success) {
@@ -414,6 +424,8 @@ void SiftFeatureExtractorThread::Run() {
         } else {
           image_data.status = ImageReader::Status::FAILURE;
         }
+      } else {
+        std::cout << "no success\n";
       }
 
       image_data.bitmap.Deallocate();
@@ -497,6 +509,14 @@ void FeatureWriterThread::Run() {
                          image_data.image.TvecPrior(0),
                          image_data.image.TvecPrior(1),
                          image_data.image.TvecPrior(2))
+                  << std::endl;
+      }
+      if (image_data.image.HasGravityPrior()) {
+        std::cout << StringPrintf(
+                         "  Gravity:         %.3f, %.3f, %.3f",
+                         image_data.image.GravityPrior(0),
+                         image_data.image.GravityPrior(1),
+                         image_data.image.GravityPrior(2))
                   << std::endl;
       }
       std::cout << StringPrintf("  Features:        %d",

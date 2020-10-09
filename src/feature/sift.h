@@ -170,8 +170,11 @@ struct SiftMatchingOptions {
 
 // Extract SIFT features for the given image on the CPU. Only extract
 // descriptors if the given input is not NULL.
+// If `SiftExtractionOptions::upright` is true, the parameter `angle` is the
+// amount by which the up direction of the extracted sift descriptor should
+// be rotated counter clockwise from the image up direction.
 bool ExtractSiftFeaturesCPU(const SiftExtractionOptions& options,
-                            const Bitmap& bitmap, FeatureKeypoints* keypoints,
+                            const Bitmap& bitmap, const double angle, FeatureKeypoints* keypoints,
                             FeatureDescriptors* descriptors);
 bool ExtractCovariantSiftFeaturesCPU(const SiftExtractionOptions& options,
                                      const Bitmap& bitmap,
