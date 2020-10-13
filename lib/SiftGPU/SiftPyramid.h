@@ -78,6 +78,8 @@ protected:
 public:
 	//
 	float		_timing[8];
+	// Orientation to use for upright SIFT (see _FixedOrientation)
+	float       _image_orientation {0};
 	//image size related
 	//first octave
 	int			_octave_min;

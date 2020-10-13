@@ -780,6 +780,7 @@ void __global__ ComputeOrientation_Kernel(float4* d_list,
 										  float sigma, float sigma_step,
 										  float gaussian_factor, float sample_factor,
 										  int num_orientation,
+										  float image_orientation,
 										  int existing_keypoint,
 										  int subpixel,
 										  int keepsign)
@@ -812,7 +813,7 @@ void __global__ ComputeOrientation_Kernel(float4* d_list,
 	}
 	if(num_orientation == 0)
 	{
-		key.w = 0;
+		key.w = image_orientation;
 		d_list[idx] = key;
 		return;
 	}
@@ -938,7 +939,8 @@ void __global__ ComputeOrientation_Kernel(float4* d_list,
 
 
 void ProgramCU::ComputeOrientation(CuTexImage* list, CuTexImage* got, CuTexImage*key,
-								   float sigma, float sigma_step, int existing_keypoint)
+								   float sigma, float sigma_step, int existing_keypoint,
+								   float image_orientation)
 {
 	int len = list->GetImgWidth();
 	if(len <= 0) return;
@@ -961,7 +963,7 @@ void ProgramCU::ComputeOrientation(CuTexImage* list, CuTexImage* got, CuTexImage
 		len, width, height, sigma, sigma_step,
 		GlobalUtil::_OrientationGaussianFactor,
 		GlobalUtil::_OrientationGaussianFactor * GlobalUtil::_OrientationWindowFactor,
-		GlobalUtil::_FixedOrientation? 0 : GlobalUtil::_MaxOrientation,
+		GlobalUtil::_FixedOrientation? 0 : GlobalUtil::_MaxOrientation, image_orientation,
 		existing_keypoint, GlobalUtil::_SubpixelLocalization, GlobalUtil::_KeepExtremumSign);
 
 	ProgramCU::CheckErrorCUDA("ComputeOrientation");

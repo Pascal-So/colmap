@@ -848,8 +848,8 @@ bool CreateSiftGPUExtractor(const SiftExtractionOptions& options,
 }
 
 bool ExtractSiftFeaturesGPU(const SiftExtractionOptions& options,
-                            const Bitmap& bitmap, SiftGPU* sift_gpu,
-                            FeatureKeypoints* keypoints,
+                            const Bitmap& bitmap, float image_angle,
+                            SiftGPU* sift_gpu, FeatureKeypoints* keypoints,
                             FeatureDescriptors* descriptors) {
   CHECK(options.Check());
   CHECK(bitmap.IsGrey());
@@ -866,9 +866,9 @@ bool ExtractSiftFeaturesGPU(const SiftExtractionOptions& options,
   // Note, that this produces slightly different results than using SiftGPU
   // directly for RGB->GRAY conversion, since it uses different weights.
   const std::vector<uint8_t> bitmap_raw_bits = bitmap.ConvertToRawBits();
-  const int code =
-      sift_gpu->RunSIFT(bitmap.ScanWidth(), bitmap.Height(),
-                        bitmap_raw_bits.data(), GL_LUMINANCE, GL_UNSIGNED_BYTE);
+  const int code = sift_gpu->RunSIFT(bitmap.ScanWidth(), bitmap.Height(),
+                                     bitmap_raw_bits.data(), GL_LUMINANCE,
+                                     GL_UNSIGNED_BYTE, image_angle);
 
   const int kSuccessCode = 1;
   if (code != kSuccessCode) {

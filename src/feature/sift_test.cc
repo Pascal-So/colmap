@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TestExtractCovariantAffineDSPSiftFeaturesCPU) {
 
 //       FeatureKeypoints keypoints;
 //       FeatureDescriptors descriptors;
-//       BOOST_CHECK(ExtractSiftFeaturesGPU(SiftExtractionOptions(), bitmap,
+//       BOOST_CHECK(ExtractSiftFeaturesGPU(SiftExtractionOptions(), bitmap, 0,
 //                                          &sift_gpu, &keypoints, &descriptors));
 
 //       BOOST_CHECK_EQUAL(keypoints.size(), 24);

@@ -174,7 +174,8 @@ struct SiftMatchingOptions {
 // amount by which the up direction of the extracted sift descriptor should
 // be rotated counter clockwise from the image up direction.
 bool ExtractSiftFeaturesCPU(const SiftExtractionOptions& options,
-                            const Bitmap& bitmap, const double angle, FeatureKeypoints* keypoints,
+                            const Bitmap& bitmap, const double angle,
+                            FeatureKeypoints* keypoints,
                             FeatureDescriptors* descriptors);
 bool ExtractCovariantSiftFeaturesCPU(const SiftExtractionOptions& options,
                                      const Bitmap& bitmap,
@@ -192,8 +193,8 @@ bool CreateSiftGPUExtractor(const SiftExtractionOptions& options,
 // Extract SIFT features for the given image on the GPU.
 // SiftGPU must already be initialized using `CreateSiftGPU`.
 bool ExtractSiftFeaturesGPU(const SiftExtractionOptions& options,
-                            const Bitmap& bitmap, SiftGPU* sift_gpu,
-                            FeatureKeypoints* keypoints,
+                            const Bitmap& bitmap, float image_angle,
+                            SiftGPU* sift_gpu, FeatureKeypoints* keypoints,
                             FeatureDescriptors* descriptors);
 
 // Load keypoints and descriptors from text file in the following format:
@@ -263,4 +264,3 @@ void MatchGuidedSiftFeaturesGPU(const SiftMatchingOptions& match_options,
 }  // namespace colmap
 
 #endif  // COLMAP_SRC_FEATURE_SIFT_H_
-

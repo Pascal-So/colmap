@@ -192,7 +192,7 @@ public:
 	//Check glTexImage2D(...format, type,...) for the accepted values
 	//Using image data of GL_LUMINANCE + GL_UNSIGNED_BYTE can minimize transfer time
 	SIFTGPU_EXPORT virtual int  RunSIFT(int width, int height,	const void * data,
-										unsigned int gl_format, unsigned int gl_type);
+										unsigned int gl_format, unsigned int gl_type, float image_orientation);
 	//run SIFT on current image (specified by arguments), or processing the current image again
 	SIFTGPU_EXPORT virtual int  RunSIFT();
 	//run SIFT with keypoints on current image again.
