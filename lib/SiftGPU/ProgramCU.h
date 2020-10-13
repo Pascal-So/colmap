@@ -44,7 +44,7 @@ public:
 	static void ReduceHistogram(CuTexImage*hist1, CuTexImage* hist2);
 	static void GenerateList(CuTexImage* list, CuTexImage* hist);
 	static void ComputeOrientation(CuTexImage*list, CuTexImage* got, CuTexImage*key,
-		float sigma, float sigma_step, int existing_keypoint);
+		float sigma, float sigma_step, int existing_keypoint, float image_orientation);
 	static void ComputeDescriptor(CuTexImage*list, CuTexImage* got, CuTexImage* dtex, int rect = 0, int stream = 0);
 
     //data conversion

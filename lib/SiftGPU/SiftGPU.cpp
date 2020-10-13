@@ -220,7 +220,7 @@ int	 SiftGPU::RunSIFT(int index)
 
 }
 
-int  SiftGPU::RunSIFT( int width,  int height, const void * data, unsigned int gl_format, unsigned int gl_type)
+int  SiftGPU::RunSIFT( int width,  int height, const void * data, unsigned int gl_format, unsigned int gl_type, float image_orientation)
 {
 
 	if(GlobalUtil::_GoodOpenGL ==0 ) return 0;
@@ -242,6 +242,7 @@ int  SiftGPU::RunSIFT( int width,  int height, const void * data, unsigned int g
 			//if the size of image is different, the pyramid need to be reallocated.
 			GlobalUtil::StartTimer("Initialize Pyramid");
 			_pyramid->InitPyramid(width, height, _texImage->_down_sampled);
+			_pyramid->_image_orientation = image_orientation;
 			GlobalUtil::StopTimer();
 			_timing[1] = GlobalUtil::GetElapsedTime();
 

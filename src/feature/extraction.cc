@@ -386,8 +386,12 @@ void SiftFeatureExtractorThread::Run() {
 
       std::cout << "SiftFeatureExtractorThread::Run processing job\n";
 
-
       if (image_data.status == ImageReader::Status::SUCCESS) {
+        double angle = 0;
+        if (sift_options_.upright && image_data.image.HasGravityPrior()) {
+          angle = image_data.image.Angle();
+        }
+
         bool success = false;
         if (sift_options_.estimate_affine_shape ||
             sift_options_.domain_size_pooling) {
@@ -398,14 +402,10 @@ void SiftFeatureExtractorThread::Run() {
         } else if (sift_options_.use_gpu) {
           std::cout << "gpu\n";
           success = ExtractSiftFeaturesGPU(
-              sift_options_, image_data.bitmap, sift_gpu.get(),
+              sift_options_, image_data.bitmap, angle, sift_gpu.get(),
               &image_data.keypoints, &image_data.descriptors);
         } else {
           std::cout << "other\n";
-          double angle = 0;
-          if (sift_options_.upright && image_data.image.HasGravityPrior()) {
-            angle = image_data.image.Angle();
-          }
           success = ExtractSiftFeaturesCPU(sift_options_, image_data.bitmap,
                                            angle, &image_data.keypoints,
                                            &image_data.descriptors);

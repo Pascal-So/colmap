@@ -1169,7 +1169,7 @@ void PyramidCU::GetFeatureOrientations()
 
 			sigma = param.GetLevelSigma(j+param._level_min+1);
 
-			ProgramCU::ComputeOrientation(ftex, got, key, sigma, sigma_step, _existing_keypoints);		
+			ProgramCU::ComputeOrientation(ftex, got, key, sigma, sigma_step, _existing_keypoints, _image_orientation);
 		}
 	}
 
