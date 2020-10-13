@@ -90,7 +90,11 @@ std::vector<Pose> GravityRelativePoseEstimator::Estimate(
         const Eigen::Vector3d translation =
             eigensolver.eigenvectors().col(i).tail<3>().real().normalized();
 
-        candidate_solutions.push_back({rotation, translation});
+        // brace-enclosed initializer doesn't work here for gcc 4.8
+        Pose cand;
+        cand.qvec = rotation;
+        cand.tvec = translation;
+        candidate_solutions.push_back(cand);
       }
     }
 
@@ -103,8 +107,12 @@ std::vector<Pose> GravityRelativePoseEstimator::Estimate(
     Eigen::JacobiSVD<Eigen::Matrix3d> svd = M.jacobiSvd(Eigen::ComputeFullV);
     const Eigen::Vector3d nullspace_M = svd.matrixV().col(2).normalized();
 
-    candidate_solutions.push_back({zero_rot, nullspace_M});
-    candidate_solutions.push_back({zero_rot, -nullspace_M});
+    Pose cand;
+    cand.qvec = zero_rot;
+    cand.tvec = nullspace_M;
+    candidate_solutions.push_back(cand);
+    cand.tvec *= -1;
+    candidate_solutions.push_back(cand);
   }
 
   return candidate_solutions;

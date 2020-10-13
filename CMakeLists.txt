@@ -65,6 +65,7 @@ option(CGAL_ENABLED "Whether to enable the CGAL library" ON)
 option(BOOST_STATIC "Whether to enable static boost library linker flags" ON)
 set(CUDA_ARCHS "Auto" CACHE STRING "List of CUDA architectures for which to \
 generate code, e.g., Auto, All, Maxwell, Pascal, ...")
+option(ALLOW_GCC48 "Allow using gcc 4.8, this could lead to problems with std::regex." OFF)
 
 if(TESTS_ENABLED)
     enable_testing()
