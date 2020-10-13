@@ -1284,6 +1284,16 @@ void Database::UpdateSchema() const {
                  "ALTER TABLE two_view_geometries ADD COLUMN H BLOB;", nullptr);
   }
 
+  for (const std::string& dim : {"x", "y", "z"}) {
+    if (!ExistsColumn("images", "prior_gravity_" + dim)) {
+      SQLITE3_EXEC(
+          database_,
+          ("ALTER TABLE images ADD COLUMN prior_gravity_" + dim + " REAL;")
+              .c_str(),
+          nullptr);
+    }
+  }
+
   // Update user version number.
   std::unique_lock<std::mutex> lock(update_schema_mutex_);
   const std::string update_user_version_sql =
