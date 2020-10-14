@@ -289,10 +289,10 @@ bool Bitmap::ExifFocalLength(double* focal_length) const {
   std::string focal_length_35mm_str;
   if (ReadExifTag(FIMD_EXIF_EXIF, "FocalLengthIn35mmFilm",
                   &focal_length_35mm_str)) {
-    const std::regex regex(".*?([0-9.]+).*?mm.*?");
-    std::cmatch result;
-    if (std::regex_search(focal_length_35mm_str.c_str(), result, regex)) {
-      const double focal_length_35 = std::stold(result[1]);
+    if (StringContains(focal_length_35mm_str, "mm")) {
+      focal_length_35mm_str = StringReplace(focal_length_35mm_str, " ", "");
+      focal_length_35mm_str = StringReplace(focal_length_35mm_str, "mm", "");
+      const double focal_length_35 = std::stold(focal_length_35mm_str);
       if (focal_length_35 > 0) {
         *focal_length = focal_length_35 / 35.0 * max_size;
         return true;
@@ -306,10 +306,8 @@ bool Bitmap::ExifFocalLength(double* focal_length) const {
 
   std::string focal_length_str;
   if (ReadExifTag(FIMD_EXIF_EXIF, "FocalLength", &focal_length_str)) {
-    std::regex regex(".*?([0-9.]+).*?mm");
-    std::cmatch result;
-    if (std::regex_search(focal_length_str.c_str(), result, regex)) {
-      const double focal_length_mm = std::stold(result[1]);
+    if (StringContains(focal_length_str, "mm")) {
+      const double focal_length_mm = std::stold(focal_length_str);
 
       // Lookup sensor width in database.
       std::string make_str;
@@ -332,7 +330,9 @@ bool Bitmap::ExifFocalLength(double* focal_length) const {
           ReadExifTag(FIMD_EXIF_EXIF, "FocalPlaneXResolution", &x_res_str) &&
           ReadExifTag(FIMD_EXIF_EXIF, "FocalPlaneResolutionUnit",
                       &res_unit_str)) {
-        regex = std::regex(".*?([0-9.]+).*?");
+
+        auto regex = std::regex(".*?([0-9.]+).*?");
+        std::cmatch result;
         if (std::regex_search(pixel_x_dim_str.c_str(), result, regex)) {
           const double pixel_x_dim = std::stold(result[1]);
           regex = std::regex(".*?([0-9.]+).*?/.*?([0-9.]+).*?");
