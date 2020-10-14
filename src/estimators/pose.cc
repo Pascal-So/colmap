@@ -85,17 +85,33 @@ void EstimateAbsolutePoseKernel(const Camera& camera,
   custom_options.max_error =
       scaled_camera.ImageToWorldThreshold(options.max_error);
 
+  float best_inlier_ratio = 0;
+
   if (pose_prior_info.gravity) {
-    std::cout << "\n\n GRAVITY Absolute Pose \n\n";
     GravityAbsolutePoseRANSAC ransac(custom_options);
     ransac.estimator.SetGravityVector(*pose_prior_info.gravity);
     // This is safe, the static_assert at the top of this file makes sure that
     // the internal representation of these two structs is the exact same.
     *reinterpret_cast<GravityAbsolutePoseRANSAC::Report*>(report) =
         ransac.Estimate(points2D_N, points3D);
-  } else {
+
+    best_inlier_ratio = (float)report->support.num_inliers / points2D.size();
+    std::cout << "\nGRAVITY Absolute Pose inlier ratio: " << best_inlier_ratio << "\n";
+  }
+
+  // We run the P3P estimator if no gravity information is available or as a
+  // fallback if the inlier ratio from the gravity absolute pose is under .5
+  if (best_inlier_ratio < 0.5) {
     AbsolutePoseRANSAC ransac(custom_options);
-    *report = ransac.Estimate(points2D_N, points3D);
+    AbsolutePoseRANSAC::Report p3p_report =
+        ransac.Estimate(points2D_N, points3D);
+    const float inlier_ratio =
+        (float)p3p_report.support.num_inliers / points2D.size();
+    std::cout << "\nP3P Absolute Pose inlier ratio: " << inlier_ratio << "\n";
+
+    if (inlier_ratio > best_inlier_ratio) {
+      *report = p3p_report;
+    }
   }
 }
 
@@ -155,7 +171,8 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
     futures[i].get();
     const auto report = reports[i];
     total_nr_ransac_iterations += report.num_trials;
-    std::cout << "total nr. ransac iterations: " << total_nr_ransac_iterations << '\n';
+    std::cout << "total nr. ransac iterations: " << total_nr_ransac_iterations
+              << '\n';
     if (report.success && report.support.num_inliers > *num_inliers) {
       *num_inliers = report.support.num_inliers;
       proj_matrix = report.model;
