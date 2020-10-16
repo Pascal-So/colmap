@@ -137,6 +137,9 @@ void FeatureMatchingTab::CreateGeneralOptions() {
       2, 0.001, 3);
   options_widget_->AddOptionDouble(&options_->sift_matching->max_H_inlier_ratio,
                                    "max_H_inlier_ratio", 0, 2, 0.001, 3);
+  options_widget_->AddOptionBool(
+      &options_->sift_matching->use_gravity_for_verification,
+      "use_gravity_for_verification");
 
   options_widget_->AddSpacer();
 

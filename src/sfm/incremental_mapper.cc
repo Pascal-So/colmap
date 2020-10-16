@@ -489,7 +489,7 @@ bool IncrementalMapper::RegisterNextImage(const Options& options,
   std::vector<char> inlier_mask;
 
   PosePriorInfo pose_prior_info;
-  if (image.HasGravityPrior()) {
+  if (options.use_gravity_for_abs_pose && image.HasGravityPrior()) {
     pose_prior_info.gravity = image.GravityPrior();
   }
 
@@ -705,10 +705,12 @@ bool IncrementalMapper::AdjustGlobalBundle(
   }
 
   bool has_gravity_data = false;
-  for (const image_t image_id : reg_image_ids) {
-    if (reconstruction_->Image(image_id).HasGravityPrior()) {
-      has_gravity_data = true;
-      break;
+  if (options.use_gravity_for_ba) {
+    for (const image_t image_id : reg_image_ids) {
+      if (reconstruction_->Image(image_id).HasGravityPrior()) {
+        has_gravity_data = true;
+        break;
+      }
     }
   }
 
@@ -1191,8 +1193,10 @@ bool IncrementalMapper::EstimateInitialPoses(const Options& options,
       correspondence_graph.FindCorrespondencesBetweenImages(image_id1,
                                                             image_id2);
 
-  if (images[0].HasGravityPrior() && images[1].HasGravityPrior()) {
-    std::cout << "Initializing image pair " << image_id1 << ", " << image_id2 << " with gravity.\n";
+  if (options.use_gravity_for_relative_pose && images[0].HasGravityPrior() &&
+      images[1].HasGravityPrior()) {
+    std::cout << "Initializing image pair " << image_id1 << ", " << image_id2
+              << " with gravity.\n";
     RANSACOptions ransac_options;
     ransac_options.min_num_trials = 30;
     ransac_options.max_error =

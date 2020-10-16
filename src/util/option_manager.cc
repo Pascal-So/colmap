@@ -322,6 +322,8 @@ void OptionManager::AddMatchingOptions() {
                               &sift_matching->min_E_F_inlier_ratio);
   AddAndRegisterDefaultOption("SiftMatching.max_H_inlier_ratio",
                               &sift_matching->max_H_inlier_ratio);
+  AddAndRegisterDefaultOption("SiftMatching.use_gravity_for_verification",
+                              &sift_matching->use_gravity_for_verification);
 }
 
 void OptionManager::AddExhaustiveMatchingOptions() {
@@ -563,6 +565,12 @@ void OptionManager::AddMapperOptions() {
                               &mapper->mapper.max_reg_trials);
   AddAndRegisterDefaultOption("Mapper.local_ba_min_tri_angle",
                               &mapper->mapper.local_ba_min_tri_angle);
+  AddAndRegisterDefaultOption("Mapper.use_gravity_for_abs_pose",
+                              &mapper->mapper.use_gravity_for_abs_pose);
+  AddAndRegisterDefaultOption("Mapper.use_gravity_for_ba",
+                              &mapper->mapper.use_gravity_for_ba);
+  AddAndRegisterDefaultOption("Mapper.use_gravity_for_relative_pose",
+                              &mapper->mapper.use_gravity_for_relative_pose);
 
   // IncrementalTriangulator.
   AddAndRegisterDefaultOption("Mapper.tri_max_transitivity",

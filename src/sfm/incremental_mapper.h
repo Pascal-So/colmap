@@ -125,6 +125,19 @@ class IncrementalMapper {
     // Number of threads.
     int num_threads = -1;
 
+    // If an image has gravity information, use that to resect the image
+    // to the scene. Note that this requires the scene to be oriented
+    // correctly with respect to gravity.
+    bool use_gravity_for_abs_pose = true;
+
+    // Adds a cost that punishes misalignment of recorded gravity information
+    // for every image with the global vertical direction.
+    bool use_gravity_for_ba = true;
+
+    // If both images to be used for the initialization have gravity
+    // information, use that information when solving for the relative pose.
+    bool use_gravity_for_relative_pose = true;
+
     // Method to find and select next best image to register.
     enum class ImageSelectionMethod {
       MAX_VISIBLE_POINTS_NUM,

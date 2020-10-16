@@ -86,6 +86,8 @@ MapperRegistrationOptionsWidget::MapperRegistrationOptionsWidget(
   AddOptionDouble(&options->mapper->mapper.abs_pose_min_inlier_ratio,
                   "abs_pose_min_inlier_ratio");
   AddOptionInt(&options->mapper->mapper.max_reg_trials, "max_reg_trials", 1);
+  AddOptionBool(&options->mapper->mapper.use_gravity_for_abs_pose,
+                "use_gravity_for_abs_pose");
 }
 
 MapperInitializationOptionsWidget::MapperInitializationOptionsWidget(
@@ -103,6 +105,8 @@ MapperInitializationOptionsWidget::MapperInitializationOptionsWidget(
                   "init_min_tri_angle [deg]");
   AddOptionInt(&options->mapper->mapper.init_max_reg_trials,
                   "init_max_reg_trials", 1);
+  AddOptionBool(&options->mapper->mapper.use_gravity_for_relative_pose,
+                "use_gravity_for_relative_pose");
 }
 
 MapperBundleAdjustmentOptionsWidget::MapperBundleAdjustmentOptionsWidget(
@@ -143,6 +147,8 @@ MapperBundleAdjustmentOptionsWidget::MapperBundleAdjustmentOptionsWidget(
                1);
   AddOptionDouble(&options->mapper->ba_global_max_refinement_change,
                   "max_refinement_change", 0, 1, 1e-6, 6);
+  AddOptionBool(&options->mapper->mapper.use_gravity_for_ba,
+                "use_gravity_for_ba");
 }
 
 MapperFilteringOptionsWidget::MapperFilteringOptionsWidget(

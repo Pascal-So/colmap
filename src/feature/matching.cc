@@ -592,13 +592,14 @@ void TwoViewGeometryVerifier::Run() {
       const auto points1 = FeatureKeypointsToPointsVector(keypoints1);
       const auto points2 = FeatureKeypointsToPointsVector(keypoints2);
 
-      PosePriorInfo pose_prior_info1;
-      if (image1.HasGravityPrior()) {
-        pose_prior_info1.gravity = image1.GravityPrior();
-      }
-      PosePriorInfo pose_prior_info2;
-      if (image2.HasGravityPrior()) {
-        pose_prior_info2.gravity = image2.GravityPrior();
+      PosePriorInfo pose_prior_info1, pose_prior_info2;
+      if (options_.use_gravity_for_verification) {
+        if (image1.HasGravityPrior()) {
+          pose_prior_info1.gravity = image1.GravityPrior();
+        }
+        if (image2.HasGravityPrior()) {
+          pose_prior_info2.gravity = image2.GravityPrior();
+        }
       }
 
       if (options_.multiple_models) {
