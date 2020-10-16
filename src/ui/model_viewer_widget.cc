@@ -894,27 +894,10 @@ void ModelViewerWidget::UploadImageData(const bool selection_mode) {
       }
     }
 
-    LinePainter::Data line1, line2, line3, line4, line5, line6, line7, line8;
-    TrianglePainter::Data triangle1, triangle2;
-    BuildImageModel(image, camera, image_size_, plane_color, frame_color,
-                    &triangle1, &triangle2, &line1, &line2, &line3, &line4,
-                    &line5, &line6, &line7, &line8);
-
     // Lines are not colored with the indexed color in selection mode, so do not
     // show them, so they do not block the selection process
-    if (!selection_mode) {
-      line_data.push_back(line1);
-      line_data.push_back(line2);
-      line_data.push_back(line3);
-      line_data.push_back(line4);
-      line_data.push_back(line5);
-      line_data.push_back(line6);
-      line_data.push_back(line7);
-      line_data.push_back(line8);
-    }
-
-    triangle_data.push_back(triangle1);
-    triangle_data.push_back(triangle2);
+    BuildImageModel(image, camera, image_size_, plane_color, frame_color,
+                    &triangle_data, selection_mode ? nullptr : &line_data);
   }
 
   image_line_painter_.Upload(line_data);
@@ -1033,23 +1016,8 @@ void ModelViewerWidget::UploadMovieGrabberData() {
         frame_color = kMovieGrabberImageFrameColor;
       }
 
-      LinePainter::Data line1, line2, line3, line4, line5, line6, line7, line8;
-      TrianglePainter::Data triangle1, triangle2;
       BuildImageModel(image, camera, image_size_, plane_color, frame_color,
-                      &triangle1, &triangle2, &line1, &line2, &line3, &line4,
-                      &line5, &line6, &line7, &line8);
-
-      line_data.push_back(line1);
-      line_data.push_back(line2);
-      line_data.push_back(line3);
-      line_data.push_back(line4);
-      line_data.push_back(line5);
-      line_data.push_back(line6);
-      line_data.push_back(line7);
-      line_data.push_back(line8);
-
-      triangle_data.push_back(triangle1);
-      triangle_data.push_back(triangle2);
+                      &triangle_data, &line_data);
     }
   }
 
