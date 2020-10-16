@@ -171,7 +171,7 @@ struct SiftMatchingOptions {
 
   // Use gravity information from the images for estimating the two view
   // geometry.
-  bool use_gravity_for_verification;
+  bool use_gravity_for_verification = true;
 
   bool Check() const;
 };
