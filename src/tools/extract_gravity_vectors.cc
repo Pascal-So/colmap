@@ -13,6 +13,15 @@
 
 using namespace colmap;
 
+// Takes as input a reconstruction, extracts the global down vectors (+y) in the
+// local image coordinates for every image, and then saves these vectors as .txt
+// files in the images directory. This is useful for generating an artificial
+// ground truth dataset for testing gravity assisted SfM.
+
+// Note that the images themselves don't have to exist in the given output
+// directory, you can pass any path as long as the subdirectory structure from
+// the images directory exists.
+
 int main(int argc, char** argv) {
   InitializeGlog(argv);
 
