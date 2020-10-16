@@ -83,6 +83,10 @@ struct SiftExtractionOptions {
   // Fix the orientation to 0 for upright features.
   bool upright = false;
 
+  // If `upright` is enabled, orient the extracted feature according to the
+  // horizon orientation given from the gravity information.
+  bool use_gravity_for_upright = true;
+
   // Whether to adapt the feature detection depending on the image darkness.
   // Note that this feature is only available in the OpenGL SiftGPU version.
   bool darkness_adaptivity = false;
@@ -164,6 +168,10 @@ struct SiftMatchingOptions {
   // See TwoViewGeometry::Options for details about the following 2 options.
   double min_E_F_inlier_ratio = 0.95;
   double max_H_inlier_ratio = 0.8;
+
+  // Use gravity information from the images for estimating the two view
+  // geometry.
+  bool use_gravity_for_verification;
 
   bool Check() const;
 };

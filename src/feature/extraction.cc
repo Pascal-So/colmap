@@ -388,7 +388,8 @@ void SiftFeatureExtractorThread::Run() {
 
       if (image_data.status == ImageReader::Status::SUCCESS) {
         double angle = 0;
-        if (sift_options_.upright && image_data.image.HasGravityPrior()) {
+        if (sift_options_.upright && sift_options_.use_gravity_for_upright &&
+            image_data.image.HasGravityPrior()) {
           angle = image_data.image.Angle();
         }
 

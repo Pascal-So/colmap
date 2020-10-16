@@ -93,6 +93,8 @@ SIFTExtractionWidget::SIFTExtractionWidget(QWidget* parent,
   AddOptionInt(&options->sift_extraction->max_num_orientations,
                "max_num_orientations");
   AddOptionBool(&options->sift_extraction->upright, "upright");
+  AddOptionBool(&options->sift_extraction->use_gravity_for_upright,
+                "use_gravity_for_upright");
   AddOptionBool(&options->sift_extraction->domain_size_pooling,
                 "domain_size_pooling");
   AddOptionDouble(&options->sift_extraction->dsp_min_scale, "dsp_min_scale",
