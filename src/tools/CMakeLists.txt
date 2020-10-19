@@ -33,4 +33,5 @@ set(FOLDER_NAME "tools")
 
 # COLMAP_ADD_EXECUTABLE(example example.cc)
 COLMAP_ADD_EXECUTABLE(extract_gravity_vectors extract_gravity_vectors.cc)
+COLMAP_ADD_EXECUTABLE(extract_db_stats extract_db_stats.cc)
 COLMAP_ADD_EXECUTABLE(update_database update_database.cc)
