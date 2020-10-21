@@ -1,4 +1,5 @@
 #include "base/image.h"
+#include "base/pose.h"
 #include "base/reconstruction.h"
 #include "util/logging.h"
 #include "util/misc.h"
@@ -63,7 +64,7 @@ int main(int argc, char** argv) {
     first_file = false;
 
     const Eigen::Vector3d gravity =
-        Eigen::Quaterniond(image.Qvec()) * Eigen::Vector3d(0, 1, 0);
+        QuaternionToEigenQuaternion(image.Qvec()) * Eigen::Vector3d(0, 1, 0);
 
     std::ofstream of(gravity_file_name);
     of << std::setprecision(9) << gravity.transpose() << '\n';
