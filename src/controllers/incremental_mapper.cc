@@ -460,9 +460,27 @@ void IncrementalMapperController::Reconstruct(
         break;
       }
 
+      std::cout << "debug: before first filter reconstruction.NumPoints3D(): " << reconstruction.NumPoints3D() << '\n';
+      FilterPoints(*options_, &mapper);
+
+
+      std::cout << "debug: before ba reconstruction.NumRegImages(): " << reconstruction.NumRegImages() << '\n';
+      std::cout << "debug: before ba reconstruction.NumPoints3D(): " << reconstruction.NumPoints3D() << '\n';
+
       AdjustGlobalBundle(*options_, &mapper);
+
+
+      std::cout << "debug: after ba reconstruction.NumRegImages(): " << reconstruction.NumRegImages() << '\n';
+      std::cout << "debug: after ba reconstruction.NumPoints3D(): " << reconstruction.NumPoints3D() << '\n';
+
+
       FilterPoints(*options_, &mapper);
       FilterImages(*options_, &mapper);
+
+
+      std::cout << "debug: after filter reconstruction.NumRegImages(): " << reconstruction.NumRegImages() << '\n';
+      std::cout << "debug: after filter reconstruction.NumPoints3D(): " << reconstruction.NumPoints3D() << '\n';
+
 
       // Initial image pair failed to register.
       if (reconstruction.NumRegImages() == 0 ||
