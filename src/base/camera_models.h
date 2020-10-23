@@ -475,15 +475,18 @@ bool BaseCameraModel<CameraModel>::HasBogusParams(
     const T min_focal_length_ratio, const T max_focal_length_ratio,
     const T max_extra_param) {
   if (HasBogusPrincipalPoint(params, width, height)) {
+    std::cout << "bogus principal point\n";
     return true;
   }
 
   if (HasBogusFocalLength(params, width, height, min_focal_length_ratio,
                           max_focal_length_ratio)) {
+    std::cout << "bogus focal length\n";
     return true;
   }
 
   if (HasBogusExtraParams(params, max_extra_param)) {
+    std::cout << "bogus extra params\n";
     return true;
   }
 
