@@ -69,6 +69,9 @@ struct BundleAdjustmentOptions {
   // Whether to print a final summary.
   bool print_summary = true;
 
+  // See IncrementalMapper::Options
+  bool use_gravity_for_ba = true;
+
   // Minimum number of residuals to enable multi-threading. Note that
   // single-threaded is typically better for small bundle adjustment problems
   // due to the overhead of threading.
