@@ -50,6 +50,9 @@ void AdjustGlobalBundle(const IncrementalMapperOptions& options,
                         IncrementalMapper* mapper) {
   BundleAdjustmentOptions custom_ba_options = options.GlobalBundleAdjustment();
 
+  const IncrementalMapper::Options mapper_options = options.Mapper();
+  custom_ba_options.use_gravity_for_ba = mapper_options.use_gravity_for_ba;
+
   const size_t num_reg_images = mapper->GetReconstruction().NumRegImages();
 
   // Use stricter convergence criteria for first registered images.
@@ -70,7 +73,7 @@ void AdjustGlobalBundle(const IncrementalMapperOptions& options,
     mapper->AdjustParallelGlobalBundle(
         custom_ba_options, options.ParallelGlobalBundleAdjustment());
   } else {
-    mapper->AdjustGlobalBundle(options.Mapper(), custom_ba_options);
+    mapper->AdjustGlobalBundle(mapper_options, custom_ba_options);
   }
 }
 
