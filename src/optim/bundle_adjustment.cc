@@ -465,6 +465,9 @@ void BundleAdjuster::AddImageToProblem(const image_t image_id,
 
     ceres::CostFunction* gravity_cost_function = GravityAlignmentCostFunction::Create(image.GravityPrior(), Eigen::Vector3d::UnitY());
     problem_->AddResidualBlock(gravity_cost_function, gravity_loss_function, qvec_data);
+    std::cout << "adding gravity cost in bundle adjustment\n";
+  } else {
+    std::cout << "not adding gravity cost in bundle adjustment\n";
   }
 }
 

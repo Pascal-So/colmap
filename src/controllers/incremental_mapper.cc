@@ -463,26 +463,18 @@ void IncrementalMapperController::Reconstruct(
         break;
       }
 
-      std::cout << "debug: before first filter reconstruction.NumPoints3D(): " << reconstruction.NumPoints3D() << '\n';
-      FilterPoints(*options_, &mapper);
+      const auto camera_id1 = mapper.GetReconstruction().Image(image_id1).CameraId();
+      const auto camera_id2 = mapper.GetReconstruction().Image(image_id2).CameraId();
 
+      std::cout << "camera1 params " << mapper.GetReconstruction().Camera(camera_id1).ParamsToString() << '\n';
 
-      std::cout << "debug: before ba reconstruction.NumRegImages(): " << reconstruction.NumRegImages() << '\n';
-      std::cout << "debug: before ba reconstruction.NumPoints3D(): " << reconstruction.NumPoints3D() << '\n';
+      std::cout << "nr points 3d: " << mapper.GetReconstruction().NumPoints3D() << '\n';
 
       AdjustGlobalBundle(*options_, &mapper);
-
-
-      std::cout << "debug: after ba reconstruction.NumRegImages(): " << reconstruction.NumRegImages() << '\n';
-      std::cout << "debug: after ba reconstruction.NumPoints3D(): " << reconstruction.NumPoints3D() << '\n';
-
-
       FilterPoints(*options_, &mapper);
       FilterImages(*options_, &mapper);
 
-
-      std::cout << "debug: after filter reconstruction.NumRegImages(): " << reconstruction.NumRegImages() << '\n';
-      std::cout << "debug: after filter reconstruction.NumPoints3D(): " << reconstruction.NumPoints3D() << '\n';
+      std::cout << "camera1 params after BA " << mapper.GetReconstruction().Camera(camera_id1).ParamsToString() << '\n';
 
 
       // Initial image pair failed to register.

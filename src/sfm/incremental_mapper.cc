@@ -361,6 +361,7 @@ bool IncrementalMapper::RegisterNextImage(const Options& options,
   // Check if enough 2D-3D correspondences.
   if (image.NumVisiblePoints3D() <
       static_cast<size_t>(options.abs_pose_min_num_inliers)) {
+    std::cout << "failed to register: not enough 2d-3d correspondences\n";
     return false;
   }
 
@@ -426,6 +427,7 @@ bool IncrementalMapper::RegisterNextImage(const Options& options,
   // hence we skip some of the 2D-3D correspondences.
   if (tri_points2D.size() <
       static_cast<size_t>(options.abs_pose_min_num_inliers)) {
+    std::cout << "failed to register: bogus parameters for min num inliers, only " << tri_points2D.size() << " tri_points2D\n";
     return false;
   }
 
@@ -499,10 +501,12 @@ bool IncrementalMapper::RegisterNextImage(const Options& options,
   if (!EstimateAbsolutePose(abs_pose_options, tri_points2D, tri_points3D,
                             pose_prior_info, &image.Qvec(), &image.Tvec(),
                             &camera, &num_inliers, &inlier_mask)) {
+    std::cout << "failed to register: EstimateAbsolutePose returned false\n";
     return false;
   }
 
   if (num_inliers < static_cast<size_t>(options.abs_pose_min_num_inliers)) {
+    std::cout << "failed to register: not enough inliers\n";
     return false;
   }
 
@@ -513,6 +517,7 @@ bool IncrementalMapper::RegisterNextImage(const Options& options,
   if (!RefineAbsolutePose(abs_pose_refinement_options, inlier_mask,
                           tri_points2D, tri_points3D, &image.Qvec(),
                           &image.Tvec(), &camera)) {
+    std::cout << "failed to register: RefineAbsolutePose returned false\n";
     return false;
   }
 
