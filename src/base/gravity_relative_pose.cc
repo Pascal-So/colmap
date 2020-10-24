@@ -41,7 +41,8 @@ LORANSAC<GravityRelativePoseEstimator, GravityRelativePoseEstimator>::Report
 EstimateRelativePoseGravity(
     std::array<std::vector<Eigen::Vector2d>, 2> normalized_keypoints,
     const std::array<Eigen::Vector3d, 2>& gravity,
-    const RANSACOptions ransac_options, std::array<Pose, 2>* poses) {
+    const RANSACOptions ransac_options, std::array<Pose, 2>* poses,
+    std::vector<Eigen::Vector3d>* points3D) {
   CHECK_NOTNULL(poses);
 
   std::array<Eigen::Quaterniond, 2> rotations;
@@ -87,6 +88,9 @@ EstimateRelativePoseGravity(
   std::vector<Eigen::Vector3d> points3D_in_front;
   points3D_in_front.reserve(nr_inliers);
   CheckCheirality(R, t, inlier_points[0], inlier_points[1], &points3D_in_front);
+  if (points3D != nullptr) {
+    *points3D = points3D_in_front;
+  }
 
   const std::size_t score_positive = points3D_in_front.size();
 
@@ -95,6 +99,9 @@ EstimateRelativePoseGravity(
 
   if (points3D_in_front.size() > score_positive) {
     t *= -1;
+    if (points3D != nullptr) {
+      *points3D = points3D_in_front;
+    }
   }
 
   (*poses)[0].qvec = EigenQuaternionToQuaternion(rotations[0].conjugate());
@@ -112,7 +119,8 @@ EstimateRelativePoseGravity(const std::array<Image, 2>& images,
                             const std::array<Camera, 2>& cameras,
                             const FeatureMatches matches,
                             const RANSACOptions ransac_options,
-                            std::array<Pose, 2>* poses) {
+                            std::array<Pose, 2>* poses,
+                            std::vector<Eigen::Vector3d>* points3D) {
   CHECK_NOTNULL(poses);
   CHECK(images[0].HasGravityPrior());
   CHECK(images[1].HasGravityPrior());
@@ -138,7 +146,7 @@ EstimateRelativePoseGravity(const std::array<Image, 2>& images,
   }
 
   return EstimateRelativePoseGravity(std::move(normalized_keypoints), gravity,
-                                     ransac_options, poses);
+                                     ransac_options, poses, points3D);
 }
 
 }  // namespace colmap
