@@ -83,6 +83,8 @@ MapperRegistrationOptionsWidget::MapperRegistrationOptionsWidget(
                   "abs_pose_max_error [px]");
   AddOptionInt(&options->mapper->mapper.abs_pose_min_num_inliers,
                "abs_pose_min_num_inliers");
+  AddOptionInt(&options->mapper->mapper.abs_pose_min_num_iterations,
+               "abs_pose_min_num_iterations");
   AddOptionDouble(&options->mapper->mapper.abs_pose_min_inlier_ratio,
                   "abs_pose_min_inlier_ratio");
   AddOptionInt(&options->mapper->mapper.max_reg_trials, "max_reg_trials", 1);
