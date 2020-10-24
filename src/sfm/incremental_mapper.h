@@ -98,6 +98,9 @@ class IncrementalMapper {
     // Whether to estimate the extra parameters in absolute pose estimation.
     bool abs_pose_refine_extra_params = true;
 
+    // Minimum number of RANSAC iterations to register an image.
+    int abs_pose_min_num_iterations = 100;
+
     // Number of images to optimize in local bundle adjustment.
     int local_ba_num_images = 6;
 
