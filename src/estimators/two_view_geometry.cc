@@ -278,7 +278,7 @@ void TwoViewGeometry::EstimateCalibrated(
       std::array<Pose, 2> poses;
       const auto report = EstimateRelativePoseGravity(
           {matched_points1_normalized, matched_points2_normalized}, gravity,
-          E_ransac_options, &poses);
+          E_ransac_options, &poses, nullptr);
 
       Pose relative_pose;
       ComputeRelativePose(poses[0].qvec, poses[0].tvec, poses[1].qvec,

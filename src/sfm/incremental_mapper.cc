@@ -1212,12 +1212,20 @@ bool IncrementalMapper::EstimateInitialPoses(const Options& options,
                  cameras[1].ImageToWorldThreshold(options.init_max_error));
 
     std::array<Pose, 2> poses;
+    std::vector<Eigen::Vector3d> points3D;
     const auto report = EstimateRelativePoseGravity(images, cameras, matches,
-                                                    ransac_options, &poses);
-    if (report.support.num_inliers > options.init_min_num_inliers) {
-      prev_init_image_pair_id_ = image_pair_id;
-      prev_init_poses_ = poses;
-      return true;
+                                                    ransac_options, &poses,
+                                                    &points3D);
+
+    if (points3D.size() > 0) {
+      const double tri_angle = Median(CalculateTriangulationAngles(
+        poses[0].inverse().tvec, poses[1].inverse().tvec, points3D));
+      if (report.support.num_inliers > options.init_min_num_inliers &&
+          tri_angle > DegToRad(options.init_min_tri_angle)) {
+        prev_init_image_pair_id_ = image_pair_id;
+        prev_init_poses_ = poses;
+        return true;
+      }
     }
 
   } else {

@@ -239,6 +239,13 @@ struct Pose {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Eigen::Vector4d qvec = ComposeIdentityQuaternion();
   Eigen::Vector3d tvec = Eigen::Vector3d::Zero();
+
+  Pose inverse() const {
+    Pose inv;
+    inv.qvec = InvertQuaternion(qvec);
+    inv.tvec = -QuaternionRotatePoint(inv.qvec, tvec);
+    return inv;
+  }
 };
 
 struct PosePriorInfo {

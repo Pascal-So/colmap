@@ -56,14 +56,16 @@ LORANSAC<GravityRelativePoseEstimator, GravityRelativePoseEstimator>::Report
 EstimateRelativePoseGravity(
     std::array<std::vector<Eigen::Vector2d>, 2> normalized_keypoints,
     const std::array<Eigen::Vector3d, 2>& gravity,
-    const RANSACOptions ransac_options, std::array<Pose, 2>* poses);
+    const RANSACOptions ransac_options, std::array<Pose, 2>* poses,
+    std::vector<Eigen::Vector3d>* points3D);
 
 LORANSAC<GravityRelativePoseEstimator, GravityRelativePoseEstimator>::Report
 EstimateRelativePoseGravity(const std::array<Image, 2>& images,
                             const std::array<Camera, 2>& cameras,
                             const FeatureMatches matches,
                             const RANSACOptions ransac_options,
-                            std::array<Pose, 2>* poses);
+                            std::array<Pose, 2>* poses,
+                            std::vector<Eigen::Vector3d>* points3D);
 
 }  // namespace colmap
 
