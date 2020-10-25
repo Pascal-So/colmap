@@ -1178,6 +1178,8 @@ void IncrementalMapper::DeRegisterImageEvent(const image_t image_id) {
   }
 }
 
+int num_gravity_rel_pose_ransac_iterations = 0;
+
 bool IncrementalMapper::EstimateInitialPoses(const Options& options,
                                              const image_t image_id1,
                                              const image_t image_id2) {
@@ -1216,6 +1218,9 @@ bool IncrementalMapper::EstimateInitialPoses(const Options& options,
     const auto report = EstimateRelativePoseGravity(images, cameras, matches,
                                                     ransac_options, &poses,
                                                     &points3D);
+
+    num_gravity_rel_pose_ransac_iterations += report.num_trials;
+    std::cout << "num_gravity_rel_pose_ransac_iterations: " << num_gravity_rel_pose_ransac_iterations << '\n';
 
     if (points3D.size() > 0) {
       const double tri_angle = Median(CalculateTriangulationAngles(
