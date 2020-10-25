@@ -447,7 +447,7 @@ bool IncrementalMapper::RegisterNextImage(const Options& options,
   // - too early termination may lead to bad registration.
   abs_pose_options.ransac_options.min_num_trials = options.abs_pose_min_num_iterations;
   abs_pose_options.ransac_options.max_num_trials = 10000;
-  abs_pose_options.ransac_options.confidence = 0.99999;
+  abs_pose_options.ransac_options.confidence = options.abs_pose_confidence;
 
   AbsolutePoseRefinementOptions abs_pose_refinement_options;
   if (num_reg_images_per_camera_[image.CameraId()] > 0) {

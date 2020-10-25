@@ -98,6 +98,9 @@ class IncrementalMapper {
     // Minimum number of RANSAC iterations to register an image.
     int abs_pose_min_num_iterations = 100;
 
+    // Required RANSAC confidence to register an image.
+    double abs_pose_confidence = 0.99999;
+
     // Number of images to optimize in local bundle adjustment.
     int local_ba_num_images = 6;
 
