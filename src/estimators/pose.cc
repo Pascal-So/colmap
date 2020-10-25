@@ -171,6 +171,7 @@ bool EstimateAbsolutePose(const AbsolutePoseEstimationOptions& options,
     futures[i].get();
     const auto report = reports[i];
     total_nr_ransac_iterations += report.num_trials;
+    std::cout << "ransac inlier ratio: " << ((double)report.support.num_inliers / points2D.size()) << '\n';
     std::cout << "total nr. ransac iterations: " << total_nr_ransac_iterations
               << '\n';
     if (report.success && report.support.num_inliers > *num_inliers) {
