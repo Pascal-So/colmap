@@ -227,6 +227,10 @@ bool TwoViewGeometry::EstimateRelativePose(
   return true;
 }
 
+int num_tvg_ransac_iterations_E = 0;
+int num_tvg_ransac_iterations_F = 0;
+int num_tvg_ransac_iterations_H = 0;
+
 void TwoViewGeometry::EstimateCalibrated(
     const Camera& camera1, const std::vector<Eigen::Vector2d>& points1,
     const Camera& camera2, const std::vector<Eigen::Vector2d>& points2,
@@ -286,6 +290,14 @@ void TwoViewGeometry::EstimateCalibrated(
     config = ConfigurationType::DEGENERATE;
     return;
   }
+
+  num_tvg_ransac_iterations_E += E_report.num_trials;
+  num_tvg_ransac_iterations_F += F_report.num_trials;
+  num_tvg_ransac_iterations_H += H_report.num_trials;
+
+  std::cout << "num_tvg_ransac_iterations_E: " << num_tvg_ransac_iterations_E << '\n';
+  std::cout << "num_tvg_ransac_iterations_F: " << num_tvg_ransac_iterations_F << '\n';
+  std::cout << "num_tvg_ransac_iterations_H: " << num_tvg_ransac_iterations_H << '\n';
 
   // Determine inlier ratios of different models.
 
