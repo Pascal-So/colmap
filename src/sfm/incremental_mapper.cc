@@ -618,14 +618,14 @@ IncrementalMapper::AdjustLocalBundle(
     // Fix 7 DOF to avoid scale/rotation/translation drift in bundle adjustment.
     if (local_bundle.size() == 1) {
       ba_config.SetConstantPose(local_bundle[0]);
-      ba_config.SetConstantLengthTvec(image_id);
+      ba_config.SetConstantTvec(image_id, {0});
     } else if (local_bundle.size() > 1) {
       const image_t image_id1 = local_bundle[local_bundle.size() - 1];
       const image_t image_id2 = local_bundle[local_bundle.size() - 2];
       ba_config.SetConstantPose(image_id1);
       if (!options.fix_existing_images ||
           !existing_image_ids_.count(image_id2)) {
-        ba_config.SetConstantLengthTvec(image_id2);
+        ba_config.SetConstantTvec(image_id2, {0});
       }
     }
 
@@ -735,7 +735,7 @@ bool IncrementalMapper::AdjustGlobalBundle(
     ba_config.SetConstantPose(reg_image_ids[0]);
     if (!options.fix_existing_images ||
         !existing_image_ids_.count(reg_image_ids[1])) {
-      ba_config.SetConstantLengthTvec(reg_image_ids[1]);
+      ba_config.SetConstantTvec(reg_image_ids[1], {0});
     }
   }
 
