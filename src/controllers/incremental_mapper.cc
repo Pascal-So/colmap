@@ -49,9 +49,7 @@ size_t TriangulateImage(const IncrementalMapperOptions& options,
 void AdjustGlobalBundle(const IncrementalMapperOptions& options,
                         IncrementalMapper* mapper) {
   BundleAdjustmentOptions custom_ba_options = options.GlobalBundleAdjustment();
-
   const IncrementalMapper::Options mapper_options = options.Mapper();
-  custom_ba_options.use_gravity_for_ba = mapper_options.use_gravity_for_ba;
 
   const size_t num_reg_images = mapper->GetReconstruction().NumRegImages();
 
@@ -234,6 +232,7 @@ BundleAdjustmentOptions IncrementalMapperOptions::LocalBundleAdjustment()
   options.loss_function_scale = 1.0;
   options.loss_function_type =
       BundleAdjustmentOptions::LossFunctionType::SOFT_L1;
+  options.use_gravity_for_ba = false;
   return options;
 }
 
@@ -258,6 +257,7 @@ BundleAdjustmentOptions IncrementalMapperOptions::GlobalBundleAdjustment()
 	  ba_min_num_residuals_for_multi_threading;
   options.loss_function_type =
       BundleAdjustmentOptions::LossFunctionType::TRIVIAL;
+  options.use_gravity_for_ba = mapper.use_gravity_for_ba;
   return options;
 }
 
