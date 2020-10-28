@@ -457,7 +457,7 @@ void BundleAdjuster::AddImageToProblem(const image_t image_id,
   if (options_.use_gravity_for_ba && image.HasGravityPrior()) {
     // scale input so that 3 degrees is at s=1
     constexpr double gravity_loss_inner_scale = 1 - std::cos(3 * 3.1415926 / 180);
-    const double gravity_loss_outer_scale = 1;
+    const double gravity_loss_outer_scale = 100.;
 
     ceres::LossFunction* gravity_loss_function =
         new ceres::ScaledLoss(new ceres::CauchyLoss(gravity_loss_inner_scale), gravity_loss_outer_scale,
