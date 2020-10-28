@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
   auto images = db.ReadAllImages();
 
   for (auto& image : images) {
-    image.SetGravityPrior(ReadImageGravityPrior(images_path + image.Name()));
+    image.SetGravityPrior(ReadImageGravityPrior(EnsureTrailingSlash(images_path) + image.Name()));
     db.UpdateImage(image);
   }
 

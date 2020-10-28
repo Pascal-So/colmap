@@ -1209,9 +1209,10 @@ bool IncrementalMapper::EstimateInitialPoses(const Options& options,
               << " with gravity.\n";
     RANSACOptions ransac_options;
     ransac_options.min_num_trials = 30;
-    ransac_options.max_error =
-        std::max(cameras[0].ImageToWorldThreshold(options.init_max_error),
-                 cameras[1].ImageToWorldThreshold(options.init_max_error));
+    ransac_options.max_error = std::max(std::max(
+        cameras[0].ImageToWorldThreshold(options.init_max_error),
+        cameras[1].ImageToWorldThreshold(options.init_max_error)),
+        1e-8);
 
     std::array<Pose, 2> poses;
     std::vector<Eigen::Vector3d> points3D;

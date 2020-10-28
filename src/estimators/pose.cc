@@ -82,8 +82,11 @@ void EstimateAbsolutePoseKernel(const Camera& camera,
 
   // Estimate pose for given focal length.
   auto custom_options = options;
+  // With a cameras set to bogus parameters this line sometimes manages to set
+  // the max_error to a negative value before the image is filtered out, which
+  // would then lead to a crash.
   custom_options.max_error =
-      scaled_camera.ImageToWorldThreshold(options.max_error);
+      std::max(scaled_camera.ImageToWorldThreshold(options.max_error), 1e-8);
 
   float best_inlier_ratio = 0;
 

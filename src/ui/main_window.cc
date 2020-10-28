@@ -59,6 +59,11 @@ MainWindow::MainWindow(const OptionManager& options)
 
 void MainWindow::ImportReconstruction(const std::string& path) {
   const size_t idx = reconstruction_manager_.Read(path);
+
+  for (std::size_t i = 0; i < reconstruction_manager_.Size(); ++i) {
+    reconstruction_manager_.Get(i).ReadImageGravityPriors(*options_.image_path);
+  }
+
   reconstruction_manager_widget_->Update();
   reconstruction_manager_widget_->SelectReconstruction(idx);
   RenderNow();

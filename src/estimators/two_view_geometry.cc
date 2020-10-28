@@ -272,9 +272,10 @@ void TwoViewGeometry::EstimateCalibrated(
            EssentialMatrixFivePointEstimator>::Report E_report;
   {
     auto E_ransac_options = options.ransac_options;
-    E_ransac_options.max_error = std::max(
+    E_ransac_options.max_error = std::max(std::max(
         camera1.ImageToWorldThreshold(options.ransac_options.max_error),
-        camera2.ImageToWorldThreshold(options.ransac_options.max_error));
+        camera2.ImageToWorldThreshold(options.ransac_options.max_error)),
+        1e-8);
     if (pose_prior_info1.gravity && pose_prior_info2.gravity) {
       std::cout << "estimate tvg with gravity\n";
       const std::array<Eigen::Vector3d, 2> gravity = {
