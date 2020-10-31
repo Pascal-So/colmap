@@ -6,7 +6,9 @@ About this Fork
 
 This fork integrates known vertical direction handling into every step of the COLMAP pipeline. By recording accelerometer data of the camera we can detect the direction of gravity, which is assumed to be constant over the dimensions of the reconstructed scene. This additional information can be used to aid in the reconstruction.
 
-This is part of my bachelor's thesis so I don't think I can accept pull requests, or at least I'd have to double check with my supervisiors. Either way I'm not really looking for pull requests on this branch currently, and also **I RESERVE THE RIGHT TO REWRITE GIT HISTORY ON THIS BRANCH** as long as I'm still working on this thesis.
+See [Pascal-So/arduino-gravity-recorder](https://github.com/Pascal-So/arduino-gravity-recorder) for ways to obtain gravity measurements.
+
+This fork was created as part of my Bachelor's Thesis "Incremental Structure from Motion with Known Vertical Direction". You can find the thesis and some additional information on my [website](https://projects.pascalsommer.ch/gravity-sfm).
 
 About
 -----

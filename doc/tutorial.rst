@@ -170,6 +170,16 @@ reconstruction, the relative folder structure should be preserved. COLMAP does
 not modify the input images or directory and all extracted data is stored in a
 single, self-contained SQLite database file (see :doc:`database`).
 
+To add known vertical directions to the images, a text file with the extension
+replaced by ``.txt`` can be added for every image. For example, to give this
+information about ``image1.jpg``, you would add a text file called ``image1.txt``
+in the same directory. The text file should contain three numbers: the x y and
+z components of the normalized global downward vector expressed in the camera
+coordinate system. For a photo taken upright, pointing straight at the horizon,
+this vector would be ``0 1 0``. The functionality to use this gravity vector is
+only present in the ``gravity`` branch at `pascal-so/colmap
+<https://github.com/Pascal-So/colmap/tree/gravity>`_.
+
 The first step is to start the graphical user interface of COLMAP by running the
 pre-built binaries (Windows: `COLMAP.bat`, Mac: `COLMAP.app`) or by executing
 ``./src/exe/colmap gui`` from the CMake build folder. Next, create a new project
