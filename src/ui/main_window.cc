@@ -72,32 +72,54 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 
   if (project_widget_->IsValid() && *options_.project_path == "") {
     // Project was created, but not yet saved
-    QMessageBox::StandardButton reply;
-    reply = QMessageBox::question(
-        this, "",
-        tr("You have not saved your project. Do you want to save it?"),
-        QMessageBox::Yes | QMessageBox::No);
-    if (reply == QMessageBox::Yes) {
-      ProjectSave();
-    }
-  }
+    QMessageBox msgBox;
+    msgBox.setText("You have not saved your project.");
+    msgBox.setInformativeText("Do you want to save the project?");
+    msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Save);
 
-  QMessageBox::StandardButton reply;
-  reply = QMessageBox::question(this, "", tr("Do you really want to quit?"),
-                                QMessageBox::Yes | QMessageBox::No);
-  if (reply == QMessageBox::No) {
-    event->ignore();
+    bool retry = true;
+    while (retry) {
+      retry = false;
+
+      switch (msgBox.exec()) {
+        case QMessageBox::Save:
+          if (!ProjectSave()) {
+            retry = true;
+          }
+          break;
+        case QMessageBox::Discard:
+          break;
+        case QMessageBox::Cancel:
+          event->ignore();
+          return;
+        default:
+          // should never be reached
+          break;
+      }
+    }
   } else {
-    if (mapper_controller_) {
-      mapper_controller_->Stop();
-      mapper_controller_->Wait();
+    // Even with a saved project, there is still some information that the user
+    // might lose when closing the window, for example the reconstruction or the
+    // log.
+
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "", tr("Do you really want to quit?"),
+                                  QMessageBox::Yes | QMessageBox::No);
+    if (reply == QMessageBox::No) {
+      event->ignore();
+      return;
     }
-
-    log_widget_->close();
-    event->accept();
-
-    window_closed_ = true;
   }
+
+  if (mapper_controller_) {
+    mapper_controller_->Stop();
+    mapper_controller_->Wait();
+  }
+
+  log_widget_->close();
+  event->accept();
+  window_closed_ = true;
 }
 
 void MainWindow::CreateWidgets() {
@@ -603,7 +625,9 @@ void MainWindow::ProjectEdit() {
   project_widget_->raise();
 }
 
-void MainWindow::ProjectSave() {
+bool MainWindow::ProjectSave() {
+  bool saved = false;
+
   if (!ExistsFile(*options_.project_path)) {
     std::string project_path =
         QFileDialog::getSaveFileName(this, tr("Select project file"), "",
@@ -617,16 +641,21 @@ void MainWindow::ProjectSave() {
       }
       *options_.project_path = project_path;
       options_.Write(*options_.project_path);
+      saved = true;
     }
   } else {
     // Project path was chosen previously, either here or via command-line.
     options_.Write(*options_.project_path);
+    saved = true;
   }
 
   UpdateWindowTitle();
+  return saved;
 }
 
-void MainWindow::ProjectSaveAs() {
+bool MainWindow::ProjectSaveAs() {
+  bool saved;
+
   const std::string new_project_path =
       QFileDialog::getSaveFileName(this, tr("Select project file"), "",
                                    tr("Project file (*.ini)"))
@@ -635,9 +664,11 @@ void MainWindow::ProjectSaveAs() {
   if (new_project_path != "") {
     *options_.project_path = new_project_path;
     options_.Write(*options_.project_path);
+    saved = true;
   }
 
   UpdateWindowTitle();
+  return saved;
 }
 
 void MainWindow::Import() {

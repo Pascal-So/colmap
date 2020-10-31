@@ -82,8 +82,8 @@ class MainWindow : public QMainWindow {
   void ProjectNew();
   bool ProjectOpen();
   void ProjectEdit();
-  void ProjectSave();
-  void ProjectSaveAs();
+  bool ProjectSave();
+  bool ProjectSaveAs();
   void Import();
   void ImportFrom();
   void Export();
