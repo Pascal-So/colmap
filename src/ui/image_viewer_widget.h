@@ -72,9 +72,11 @@ class ImageViewerWidget : public QWidget {
  protected:
   void resizeEvent(QResizeEvent* event);
   void closeEvent(QCloseEvent* event);
+  void keyPressEvent(QKeyEvent *event);
   void ZoomIn();
   void ZoomOut();
   void Save();
+
 
   QGridLayout* grid_layout_;
   QHBoxLayout* button_layout_;

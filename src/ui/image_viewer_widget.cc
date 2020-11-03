@@ -104,6 +104,11 @@ void ImageViewerWidget::closeEvent(QCloseEvent* event) {
   graphics_scene_.ImagePixmapItem()->setPixmap(QPixmap());
 }
 
+void ImageViewerWidget::keyPressEvent(QKeyEvent *event) {
+  if(event->key() == Qt::Key_Escape)
+    close();
+}
+
 void ImageViewerWidget::ShowBitmap(const Bitmap& bitmap) {
   ShowPixmap(QPixmap::fromImage(BitmapToQImageRGB(bitmap)));
 }
